@@ -34,7 +34,9 @@ td{border:1px solid #eee;padding:8px;text-align:center;}
 .search-box{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
 .search-box input{flex:2;min-width:150px;}
 .search-box select{width:120px;}
-.verify-card{max-width:400px;margin:20px auto;background:#fff;border-radius:20px;text-align:center;padding:20px;}
+.verify-card{max-width:400px;margin:40px auto;background:#fff;border-radius:20px;text-align:center;padding:30px;box-shadow:0 4px 15px rgba(0,0,0,0.15);}
+.verify-card h3{margin-bottom:15px;font-size:18px;}
+.verify-card p{font-size:14px;color:#555;margin-bottom:20px;line-height:1.5;}
 .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:1000;justify-content:center;align-items:center;}
 .modal-content{background:#fff;border-radius:20px;padding:20px;max-width:350px;width:90%;text-align:center;}
 .login-form{max-width:350px;margin:50px auto;background:#fff;border-radius:20px;padding:25px;}
@@ -43,6 +45,7 @@ td{border:1px solid #eee;padding:8px;text-align:center;}
 .footer{text-align:center;padding:16px;color:#999;font-size:11px;}
 .admin-content{display:none;}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+#hiddenQrEngine { position: absolute; top: -9999px; left: -9999px; visibility: hidden; }
 </style>
 </head>
 <body>
@@ -51,6 +54,8 @@ td{border:1px solid #eee;padding:8px;text-align:center;}
     <h1>🏛️ ĐIỂM DANH NHẬN QUÀ</h1>
     <p>Ủy ban nhân dân</p>
 </div>
+
+<div id="hiddenQrEngine"></div>
 
 <div id="loginPanel" class="container">
     <div class="login-form">
@@ -63,19 +68,20 @@ td{border:1px solid #eee;padding:8px;text-align:center;}
 
 <div id="adminPanel" class="container admin-content"></div>
 <div id="verifyPanel" style="display:none;"></div>
+
 <div id="qrModal" class="modal">
     <div class="modal-content">
         <span style="float:right;font-size:24px;cursor:pointer;" onclick="document.getElementById('qrModal').style.display='none'">&times;</span>
-        <div id="modalQR"></div>
+        <div id="modalQR" style="display:flex;justify-content:center;margin:15px 0;"></div>
         <div id="modalInfo"></div>
-        <button onclick="printQR()">🖨️ In</button>
+        <button onclick="printQR()" style="width:100%;margin-top:10px;">🖨️ In mẫu lẻ</button>
     </div>
 </div>
 <div class="footer admin-content">Hệ thống điểm danh nhận quà</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -99,6 +105,19 @@ let currentQR = null;
 let isAdmin = false;
 const ADMIN_PASSWORD = "ubnd2024";
 
+// Khai báo các hàm tiện ích toàn cục
+window.closeWindow = function() {
+    window.open('', '_self', '');
+    window.close();
+    setTimeout(() => {
+        // Dự phòng nếu trình duyệt chặn window.close() khi không phải do script mở
+        document.body.innerHTML = `<div style="text-align:center;padding:50px;font-family:sans-serif;">
+            <h2 style="color:#2e7d32;">Thao tác hoàn tất!</h2>
+            <p style="color:#555;margin-top:10px;">Bạn có thể đóng hoặc thoát ứng dụng an toàn.</p>
+        </div>`;
+    }, 200);
+};
+
 function escapeHtml(s){if(!s)return'';return s.replace(/[&<>]/g,function(m){return m==='&'?'&amp;':m==='<'?'&lt;':m==='>'?'&gt;':m;});}
 function formatTime(d){return d.toLocaleTimeString('vi-VN');}
 function formatDate(d){return d.toLocaleDateString('vi-VN');}
@@ -106,74 +125,194 @@ function getTodayStr(){return new Date().toISOString().split('T')[0];}
 function getBaseUrl(){return window.location.href.split('?')[0];}
 function randomId(){return 'HD' + Date.now() + Math.floor(Math.random()*10000);}
 
-// XÁC THỰC QUÉT QR
+// XỬ LÝ QUÉT MÃ QR KHÔNG QUA ĐĂNG NHẬP
 async function checkVerification(){
     let id = new URLSearchParams(location.search).get('id');
     if(id){
         document.getElementById('loginPanel').style.display = 'none';
-        document.getElementById('adminPanel').style.display = 'none';
+        if(document.getElementById('adminPanel')) document.getElementById('adminPanel').style.display = 'none';
         document.getElementById('verifyPanel').style.display = 'block';
-        await processCheckin(id);
+        await renderVerifyInterface(id);
         return true;
     }
     return false;
 }
 
-async function processCheckin(id){
+async function renderVerifyInterface(id){
     let div = document.getElementById('verifyPanel');
     try{
         let snap = await get(child(ref(db), 'recipients/'+id));
         if(!snap.exists()){
-            div.innerHTML = `<div class="verify-card"><h3>❌ MÃ KHÔNG HỢP LỆ</h3><button onclick="location.href=location.pathname">Đóng</button></div>`;
+            div.innerHTML = `
+                <div class="verify-card">
+                    <h3 style="color:#c62828;">❌ MÃ KHÔNG HỢP LỆ</h3>
+                    <p>Mã định danh này không tồn tại trên hệ thống dữ liệu quốc gia hoặc đã bị gỡ bỏ.</p>
+                    <button class="btn-orange" onclick="closeWindow()" style="width:100%;padding:12px;">Đóng và Thoát</button>
+                </div>`;
             return;
         }
+        
         let data = snap.val();
         let today = getTodayStr();
         let received = await get(child(ref(db), 'received/'+id+'/'+today));
+        
+        // TRƯỜNG HỢP ĐÃ ĐIỂM DANH / NHẬN QUÀ TRƯỚC ĐÓ
         if(received.exists()){
-            div.innerHTML = `<div class="verify-card"><h3>⚠️ ĐÃ NHẬN QUÀ</h3><p>Thời gian: ${received.val().time}</p><button onclick="location.href=location.pathname">Đóng</button></div>`;
+            div.innerHTML = `
+                <div class="verify-card">
+                    <h3 style="color:#ff9800;">⚠️ ĐÃ NHẬN QUÀ RỒI</h3>
+                    <p>Danh tính: <strong>${escapeHtml(data.hoTen)}</strong><br>Địa chỉ: ${escapeHtml(data.diaChi)}</p>
+                    <div style="background:#fff3e0;padding:12px;border-radius:8px;margin-bottom:20px;font-size:13px;color:#e65100;">
+                        Quà đã được phát vào lúc: <b>${received.val().time}</b> ngày hôm nay.
+                    </div>
+                    <button class="btn-orange" onclick="closeWindow()" style="width:100%;padding:12px;">Đóng và Thoát</button>
+                </div>`;
             return;
         }
-        let now = new Date();
-        await set(ref(db, 'received/'+id+'/'+today), {
-            id, hoTen: data.hoTen, diaChi: data.diaChi,
-            time: formatTime(now), datetime: now.toISOString()
-        });
-        await update(ref(db, 'recipients/'+id), { received: true, receivedTime: formatTime(now) });
-        div.innerHTML = `<div class="verify-card"><h3>✅ NHẬN QUÀ THÀNH CÔNG</h3><p>⏰ ${formatTime(now)}</p><button onclick="location.href=location.pathname">Xác nhận</button></div>`;
-        if(isAdmin) await loadData();
-    }catch(e){ div.innerHTML = `<div class="verify-card"><h3>❌ LỖI</h3><button onclick="location.reload()">Thử lại</button></div>`; }
+        
+        // TRƯỜNG HỢP HỢP LỆ VÀ CHƯA NHẬN
+        div.innerHTML = `
+            <div class="verify-card">
+                <h3 style="color:#2e7d32;">📋 THÔNG TIN ĐIỂM DANH</h3>
+                <p style="text-align:left;background:#f5f5f5;padding:15px;border-radius:8px;">
+                    • <b>Họ tên:</b> ${escapeHtml(data.hoTen)}<br>
+                    • <b>Địa chỉ:</b> ${escapeHtml(data.diaChi)}<br>
+                    • <b>Diện:</b> ${escapeHtml(data.thuocDien || '---')}<br>
+                    • <b>Khu vực:</b> ${escapeHtml(data.khuVuc || '---')}
+                </p>
+                <button id="confirmCheckinBtn" class="btn-green" style="width:100%;padding:14px;font-size:15px;margin-top:10px;">✅ Xác Nhận Nhận Quà</button>
+            </div>`;
+            
+        document.getElementById('confirmCheckinBtn').onclick = async () => {
+            let btn = document.getElementById('confirmCheckinBtn');
+            btn.innerHTML = "⏳ Đang ghi dữ liệu...";
+            btn.disabled = true;
+            
+            let now = new Date();
+            await set(ref(db, 'received/'+id+'/'+today), {
+                id, hoTen: data.hoTen, diaChi: data.diaChi,
+                time: formatTime(now), datetime: now.toISOString()
+            });
+            await update(ref(db, 'recipients/'+id), { received: true, receivedTime: formatTime(now) });
+            
+            div.innerHTML = `
+                <div class="verify-card">
+                    <h3 style="color:#2e7d32;">✅ NHẬN QUÀ THÀNH CÔNG</h3>
+                    <p>Hệ thống đã ghi nhận điểm danh cho ông/bà <b>${escapeHtml(data.hoTen)}</b> vào lúc ${formatTime(now)}.</p>
+                    <button class="btn-green" onclick="closeWindow()" style="width:100%;padding:12px;">Xác nhận thoát</button>
+                </div>`;
+        };
+
+    }catch(e){ 
+        div.innerHTML = `<div class="verify-card"><h3 style="color:#c62828;">❌ LỖI KẾT NỐI</h3><p>${e.message}</p><button onclick="location.reload()">Thử lại</button></div>`; 
+    }
 }
 
-// XUẤT EXCEL CÓ HÌNH QR
+// HÀM ĐỔI URL THÀNH ẢNH BASE64 ĐỂ CHÈN EXCEL
+function generateBase64Qr(text) {
+    return new Promise((resolve) => {
+        let container = document.getElementById('hiddenQrEngine');
+        container.innerHTML = '';
+        new QRCode(container, {
+            text: text,
+            width: 150,
+            height: 150,
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        setTimeout(() => {
+            let img = container.querySelector('img');
+            if (img) resolve(img.src.split(',')[1]); // Lấy chuỗi mã hóa base64 tinh khiết
+            else {
+                let canvas = container.querySelector('canvas');
+                resolve(canvas.toDataURL().split(',')[1]);
+            }
+        }, 100);
+    });
+}
+
+// XUẤT FILE EXCEL ĐÍNH KÈM HÌNH ẢNH MÃ QR TRỰC TIẾP (SỬ DỤNG EXCELJS)
 async function exportExcelWithQR(){
-    if(allRecipients.length===0){ alert('Chưa có dữ liệu'); return; }
+    if(allRecipients.length===0){ alert('Không có dữ liệu để xuất'); return; }
     let btn = document.getElementById('exportQrBtn');
     let oldText = btn.innerHTML;
-    btn.innerHTML = '⏳ Đang tạo...';
+    btn.innerHTML = '⏳ Đang vẽ QR...';
     btn.disabled = true;
     
     try{
-        let workbook = XLSX.utils.book_new();
-        let sheetData = [['STT', 'HỌ VÀ TÊN', 'ĐỊA CHỈ', 'THUỘC DIỆN', 'KHU VỰC', 'GHI CHÚ', 'MÃ QR']];
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('DanhSachAnhQR');
         
-        for(let i=0; i<allRecipients.length; i++){
+        // Thiết lập tiêu đề dòng đầu tiên
+        worksheet.addRow(['STT', 'HỌ VÀ TÊN', 'ĐỊA CHỈ', 'THUỘC DIỆN', 'KHU VỰC', 'GHI CHÚ', 'MÃ ĐIỂM DANH (QR)']);
+        
+        // Định hình kích cỡ cột
+        worksheet.columns = [
+            { width: 8, style: { alignment: { vertical: 'middle', horizontal: 'center' } } },
+            { width: 25, style: { alignment: { vertical: 'middle', horizontal: 'left' } } },
+            { width: 35, style: { alignment: { vertical: 'middle', horizontal: 'left' } } },
+            { width: 20, style: { alignment: { vertical: 'middle', horizontal: 'center' } } },
+            { width: 15, style: { alignment: { vertical: 'middle', horizontal: 'center' } } },
+            { width: 20, style: { alignment: { vertical: 'middle', horizontal: 'left' } } },
+            { width: 22, style: { alignment: { vertical: 'middle', horizontal: 'center' } } } // Cột chứa ảnh QR
+        ];
+        
+        // Trang trí dòng Header tiêu đề
+        worksheet.getRow(1).height = 30;
+        worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFF' } };
+        worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'B00000' } };
+        
+        // Duyệt danh sách chèn text và tạo ảnh QR nhúng trực tiếp vào ô
+        for(let i = 0; i < allRecipients.length; i++){
             let r = allRecipients[i];
-            sheetData.push([
-                r.stt || i+1, r.hoTen, r.diaChi, r.thuocDien || '', r.khuVuc || '', r.ghiChu || '', r.qrUrl
+            let rowNumber = i + 2;
+            
+            worksheet.addRow([
+                r.stt || i + 1,
+                r.hoTen,
+                r.diaChi,
+                r.thuocDien || '',
+                r.khuVuc || '',
+                r.ghiChu || '',
+                '' // Để trống ô cuối cùng này để đè ảnh QR lên
             ]);
+            
+            // Thiết lập độ cao dòng lớn để vừa vặn khung ảnh hình vuông
+            worksheet.getRow(rowNumber).height = 110;
+            
+            // Chuyển link định danh thành ảnh Base64 thô
+            let qrBase64 = await generateBase64Qr(r.qrUrl);
+            
+            let imageId = workbook.addImage({
+                base64: qrBase64,
+                extension: 'png',
+            });
+            
+            // Đặt ảnh vào đúng ô cột G (Cột số 7) tương ứng
+            worksheet.addImage(imageId, {
+                tl: { col: 6, row: rowNumber - 1, xOffset: 5, yOffset: 5 },
+                ext: { width: 135, height: 135 }
+            });
         }
         
-        let ws = XLSX.utils.aoa_to_sheet(sheetData);
-        ws['!cols'] = [{wch:6},{wch:25},{wch:35},{wch:20},{wch:12},{wch:20},{wch:50}];
-        XLSX.utils.book_append_sheet(workbook, ws, 'DanhSach');
-        XLSX.writeFile(workbook, `DANH_SACH_CO_QR_${formatDate(new Date())}.xlsx`);
-        alert(`✅ Đã xuất ${allRecipients.length} người có link QR`);
-    }catch(e){ alert('Lỗi: '+e.message); }
-    finally{ btn.innerHTML = oldText; btn.disabled = false; }
+        // Tiến hành xuất và tải tệp
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `DANH_SACH_CO_ANH_QR_${getTodayStr()}.xlsx`;
+        link.click();
+        
+        alert(`✅ Đã xuất thành công file Excel chứa hình ảnh QR cho ${allRecipients.length} người!`);
+    }catch(e){ 
+        alert('Lỗi xuất dữ liệu: ' + e.message); 
+        console.error(e);
+    } finally{ 
+        btn.innerHTML = oldText; 
+        btn.disabled = false; 
+    }
 }
 
-// XUẤT EXCEL CƠ BẢN
+// CÁC HÀM XUẤT VÀ IN ẤN CƠ BẢN
 function exportBasicExcel(){
     if(allRecipients.length===0){ alert('Chưa có dữ liệu'); return; }
     let data = allRecipients.map((r,i)=>({
@@ -185,10 +324,8 @@ function exportBasicExcel(){
     let wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'BaoCao');
     XLSX.writeFile(wb, `BAO_CAO_${formatDate(new Date())}.xlsx`);
-    alert(`✅ Đã xuất ${allRecipients.length} người`);
 }
 
-// IN GIẤY MỜI TẤT CẢ
 function printAllInvites(){
     if(allRecipients.length===0){ alert('Chưa có dữ liệu'); return; }
     let win = window.open('', '_blank');
@@ -210,12 +347,11 @@ function printAllInvites(){
         container.appendChild(div);
         new QRCode(document.getElementById(qrId), { text: r.qrUrl, width: 160, height: 160 });
     });
-    setTimeout(() => window.print(), 500);
+    setTimeout(() => window.print(), 600);
     <\/script></body></html>`);
     win.document.close();
 }
 
-// IN QR TẤT CẢ
 function printAllQRs(){
     if(allRecipients.length===0){ alert('Chưa có dữ liệu'); return; }
     let win = window.open('', '_blank');
@@ -235,12 +371,11 @@ function printAllQRs(){
         grid.appendChild(card);
         new QRCode(document.getElementById(qrId), { text: r.qrUrl, width: 130, height: 130 });
     });
-    setTimeout(() => window.print(), 500);
+    setTimeout(() => window.print(), 600);
     <\/script></body></html>`);
     win.document.close();
 }
 
-// HIỂN THỊ QR
 function showQR(id){
     let r = allRecipients.find(x=>x.id===id);
     if(!r) return;
@@ -251,69 +386,72 @@ function showQR(id){
     document.getElementById('modalInfo').innerHTML = `<p><strong>${escapeHtml(r.hoTen)}</strong></p><p>${escapeHtml(r.diaChi)}</p>`;
     modal.style.display = 'flex';
 }
+
 window.printQR = function(){
     if(!currentQR) return;
     let win = window.open('', '_blank');
-    win.document.write(`<!DOCTYPE html><html><head><title>QR - ${currentQR.hoTen}</title><style>body{text-align:center;padding:30px;}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script></head><body><div id="qr"></div><h3>${currentQR.hoTen}</h3><p>${currentQR.diaChi}</p><button onclick="window.print()">In</button><script>new QRCode(document.getElementById('qr'),{text:'${currentQR.qrUrl}',width:200,height:200});<\/script></body></html>`);
+    win.document.write(`<!DOCTYPE html><html><head><title>QR - ${currentQR.hoTen}</title><style>body{text-align:center;padding:30px;}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script></head><body><div id="qr" style="display:flex;justify-content:center;margin-bottom:15px;"></div><h3>${currentQR.hoTen}</h3><p>${currentQR.diaChi}</p><script>new QRCode(document.getElementById('qr'),{text:'${currentQR.qrUrl}',width:200,height:200}); setTimeout(()=>window.print(),300);<\/script></body></html>`);
     win.document.close();
 }
 
-// XÓA DỮ LIỆU
 async function deleteAll(){
     if(confirm('XÓA TOÀN BỘ DỮ LIỆU?')){
         await remove(ref(db, 'recipients'));
         await remove(ref(db, 'received'));
-        alert('Đã xóa');
+        alert('Đã xóa sạch dữ liệu');
         await loadData();
     }
 }
+
 async function deleteToday(){
-    let today = getTodayStr();
-    let snap = await get(child(ref(db), 'received'));
-    if(snap.exists()){
-        for(let uid in snap.val()){
-            if(snap.val()[uid][today]) await remove(ref(db, 'received/'+uid+'/'+today));
+    if(confirm('Xóa toàn bộ điểm danh của ngày hôm nay?')){
+        let today = getTodayStr();
+        let snap = await get(child(ref(db), 'received'));
+        if(snap.exists()){
+            for(let uid in snap.val()){
+                if(snap.val()[uid][today]) await remove(ref(db, 'received/'+uid+'/'+today));
+            }
         }
+        alert('Đã xóa dữ liệu hôm nay');
+        await loadData();
     }
-    alert('Đã xóa điểm danh hôm nay');
-    await loadData();
 }
 
-// ADMIN GIAO DIỆN
+// KHỞI TẠO BẢNG ĐIỀU KHIỂN QUẢN TRỊ
 async function renderAdmin(){
     document.getElementById('adminPanel').innerHTML = `
-        <div class="card"><h2>📊 THỐNG KÊ</h2><div class="dashboard">
-            <div class="box"><h3 id="total">0</h3><p>Tổng</p></div>
-            <div class="box"><h3 id="received">0</h3><p>Đã nhận</p></div>
-            <div class="box"><h3 id="notReceived">0</h3><p>Chưa nhận</p></div>
-            <div class="box"><h3 id="rate">0</h3><p>Tỷ lệ</p></div>
+        <div class="card"><h2>📊 THỐNG KÊ HÔM NAY</h2><div class="dashboard">
+            <div class="box"><h3 id="total">0</h3><p>Tổng cơ sở dữ liệu</p></div>
+            <div class="box" style="background:#2e7d32;"><h3 id="received">0</h3><p>Đã nhận quà</p></div>
+            <div class="box" style="background:#795548;"><h3 id="notReceived">0</h3><p>Chưa nhận quà</p></div>
+            <div class="box" style="background:#009688;"><h3 id="rate">0</h3><p>Tỷ lệ hoàn thành (%)</p></div>
         </div></div>
         
-        <div class="card"><h2>📂 DỮ LIỆU</h2>
+        <div class="card"><h2>📂 THAO TÁC DỮ LIỆU</h2>
             <div class="btn-row">
                 <input type="file" id="excelFile" accept=".xlsx,.xls" style="flex:2;">
-                <button id="importBtn" class="btn-blue">📤 Import</button>
-                <button id="sampleBtn" class="btn-green">📥 Mẫu Excel</button>
+                <button id="importBtn" class="btn-blue">📤 Import File</button>
+                <button id="sampleBtn" class="btn-green">📥 File Excel Mẫu</button>
             </div>
             <div class="btn-row">
-                <button id="exportBasicBtn" class="btn-green">📥 Xuất Excel</button>
-                <button id="exportQrBtn" class="btn-purple">📥 Excel có QR</button>
-                <button id="printInvitesBtn" class="btn-orange">🖨️ In giấy mời</button>
-                <button id="printAllQrBtn" class="btn-blue">🖨️ In QR</button>
+                <button id="exportBasicBtn" class="btn-green">📥 Xuất Excel Báo Cáo</button>
+                <button id="exportQrBtn" class="btn-purple">🖼️ Xuất Excel Có Ảnh QR</button>
+                <button id="printInvitesBtn" class="btn-orange">🖨️ In Giấy Mời Hàng Loạt</button>
+                <button id="printAllQrBtn" class="btn-blue">🖨️ In Nhãn Mã QR</button>
             </div>
             <div class="btn-row">
                 <button id="deleteTodayBtn" class="btn-orange">🗑️ Xóa điểm danh hôm nay</button>
-                <button id="deleteAllBtn" class="btn-red">⚠️ Xóa toàn bộ</button>
+                <button id="deleteAllBtn" style="background:#c62828; color:#fff;">⚠️ Xóa toàn bộ hệ thống</button>
             </div>
         </div>
         
-        <div class="card"><h2>📋 DANH SÁCH</h2>
+        <div class="card"><h2>📋 DANH SÁCH CHI TIẾT</h2>
             <div class="search-box">
-                <input type="text" id="search" placeholder="🔍 Tìm kiếm...">
-                <select id="statusFilter"><option value="all">Tất cả</option><option value="received">Đã nhận</option><option value="not">Chưa nhận</option></select>
+                <input type="text" id="search" placeholder="🔍 Gõ tên hoặc địa chỉ để tìm kiếm nhanh...">
+                <select id="statusFilter"><option value="all">Tất cả trạng thái</option><option value="received">Đã nhận</option><option value="not">Chưa nhận</option></select>
                 <select id="areaFilter"><option value="all">Tất cả khu vực</option></select>
             </div>
-            <div class="table-container"><table><thead><tr><th>STT</th><th>HỌ TÊN</th><th>ĐỊA CHỈ</th><th>DIỆN</th><th>KHU VỰC</th><th>TRẠNG THÁI</th><th>QR</th></tr></thead><tbody id="tableBody"></tbody></table></div>
+            <div class="table-container"><table><thead><tr><th>STT</th><th>HỌ TÊN</th><th>ĐỊA CHỈ</th><th>DIỆN</th><th>KHU VỰC</th><th>TRẠNG THÁI</th><th>XEM QR</th></tr></thead><tbody id="tableBody"></tbody></table></div>
         </div>
     `;
     
@@ -334,7 +472,7 @@ async function renderAdmin(){
 
 async function importExcel(){
     let file = document.getElementById('excelFile').files[0];
-    if(!file){ alert('Chọn file Excel'); return; }
+    if(!file){ alert('Vui lòng chọn tệp tin Excel!'); return; }
     let reader = new FileReader();
     reader.onload = async function(e){
         let wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
@@ -345,7 +483,7 @@ async function importExcel(){
             let keys = Object.keys(item);
             let hoTen = '', diaChi = '', thuocDien='', khuVuc='', ghiChu='', stt='';
             for(let k of keys){
-                let low = k.toLowerCase();
+                let low = k.toLowerCase().trim();
                 if(low.includes('tên')||low.includes('họ')) hoTen = item[k];
                 if(low.includes('địa chỉ')||low.includes('địa')) diaChi = item[k];
                 if(low.includes('diện')) thuocDien = item[k];
@@ -362,7 +500,7 @@ async function importExcel(){
             });
             success++;
         }
-        alert(`✅ Import ${success} người`);
+        alert(`✅ Import thành công ${success} người vào hệ thống!`);
         await loadData();
     };
     reader.readAsArrayBuffer(file);
@@ -373,7 +511,7 @@ function downloadSample(){
     let ws = XLSX.utils.json_to_sheet(data);
     let wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Mau');
-    XLSX.writeFile(wb, 'Mau_Import.xlsx');
+    XLSX.writeFile(wb, 'Mau_Import_Diem_Danh.xlsx');
 }
 
 async function loadData(){
@@ -427,13 +565,13 @@ function filterTable(){
         return match && matchStatus && matchArea;
     });
     let tbody = document.getElementById('tableBody');
-    if(filtered.length===0){ tbody.innerHTML='<tr><td colspan="7">📭 Không có dữ liệu</td></tr>'; return; }
+    if(filtered.length===0){ tbody.innerHTML='<tr><td colspan="7">📭 Không tìm thấy kết quả phù hợp</td></tr>'; return; }
     tbody.innerHTML = '';
     filtered.forEach((r,i)=>{
         let statusHtml = r.received ? `<span class="badge-success">✅ Đã nhận<br>${r.receivedTime}</span>` : `<span class="badge-warning">⏳ Chưa nhận</span>`;
         tbody.innerHTML += `<tr>
             <td>${r.stt||i+1}</td>
-            <td style="text-align:left">${escapeHtml(r.hoTen)}</td>
+            <td style="text-align:left; font-weight:500;">${escapeHtml(r.hoTen)}</td>
             <td style="text-align:left">${escapeHtml(r.diaChi)}</td>
             <td>${escapeHtml(r.thuocDien)||'---'}</td>
             <td>${escapeHtml(r.khuVuc)||'---'}</td>
@@ -444,7 +582,6 @@ function filterTable(){
     document.querySelectorAll('.view-qr').forEach(btn=>{ btn.onclick=()=>showQR(btn.dataset.id); });
 }
 
-// ĐĂNG NHẬP
 function login(){
     let pwd = document.getElementById('adminPassword').value;
     if(pwd === ADMIN_PASSWORD){
@@ -458,6 +595,7 @@ function login(){
     }
 }
 
+// ĐIỀU HƯỚNG HOẠT ĐỘNG BAN ĐẦU
 let verifying = await checkVerification();
 if(!verifying){
     document.getElementById('loginBtn').onclick = login;
