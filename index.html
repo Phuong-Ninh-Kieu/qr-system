@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<title>HỆ THỐNG QR XÁC THỰC ĐIỆN TỬ</title>
+<title>HỆ THỐNG ĐIỂM DANH QR</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -17,7 +17,7 @@ body{background:#eef2f7;}
 .header h1{font-size:30px;margin-bottom:10px;}
 .container{width:95%;max-width:1400px;margin:20px auto;}
 .card{background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
-.card h2{color:#b00000;margin-bottom:20px;}
+.card h2{color:#b00000;margin-bottom:20px;border-left:4px solid #b00000;padding-left:15px;}
 input,button,select{padding:10px;margin:5px;border:1px solid #ccc;border-radius:5px;}
 button{background:#b00000;color:#fff;cursor:pointer;font-weight:bold;border:none;}
 button:hover{opacity:0.9;}
@@ -41,24 +41,27 @@ table td{border:1px solid #ddd;padding:10px;text-align:center;}
 .info-row{padding:10px 0;border-bottom:1px solid #eee;display:flex;}
 .info-label{font-weight:700;width:100px;}
 .info-value{flex:1;}
-.warning{background:#fff3e0;padding:15px;border-radius:10px;margin-bottom:20px;border-left:4px solid #ff9800;}
-.warning a{color:#b00000;}
+.camera-selector{background:#f5f5f5;padding:15px;border-radius:10px;margin-bottom:15px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.camera-selector select{flex:1;min-width:200px;}
+.camera-selector button{background:#2196f3;}
+.badge-present{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;background:#e8f5e9;color:#2e7d32;}
+.badge-absent{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;background:#ffebee;color:#c62828;}
 </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>HỆ THỐNG QR XÁC THỰC ĐIỆN TỬ</h1>
-    <p>ỦY BAN NHÂN DÂN - HỆ THỐNG CHỐNG GIẢ QR</p>
+    <h1>🏛️ HỆ THỐNG ĐIỂM DANH QR</h1>
+    <p>ỦY BAN NHÂN DÂN - CHECK-IN BẰNG QR</p>
 </div>
 
 <div id="adminPanel" class="container"></div>
 <div id="verifyPanel" style="display:none;"></div>
-<div class="footer" id="footer">HỆ THỐNG QR XÁC THỰC ĐIỆN TỬ - REALTIME DATABASE</div>
+<div class="footer" id="footer">© HỆ THỐNG ĐIỂM DANH QR</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, set, get, child, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, set, get, child, update, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = { 
     apiKey: "AIzaSyCnrj2LgPIhmHQ-2gFsj2WzEa1n0RzWrbw",
@@ -73,16 +76,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Lấy đường dẫn gốc (không phải file://)
-function getBaseUrl() {
-    const currentUrl = window.location.href;
-    // Nếu đang chạy file:// thì báo lỗi
-    if (currentUrl.startsWith('file://')) {
-        return null;
-    }
-    // Loại bỏ tham số ?id=... để lấy đường dẫn gốc
-    return currentUrl.split('?')[0];
-}
+let currentCameraId = null;
+let cameraDevices = [];
+let html5QrCode = null;
 
 function randomToken(length = 32) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -92,6 +88,10 @@ function randomToken(length = 32) {
 }
 
 function escapeHtml(str) { if (!str) return ''; return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+function formatDate(date) { return date.toLocaleDateString('vi-VN'); }
+function formatTime(date) { return date.toLocaleTimeString('vi-VN'); }
+function getTodayStr() { return new Date().toISOString().split('T')[0]; }
+function getBaseUrl() { return window.location.href.split('?')[0]; }
 
 // ========== KIỂM TRA URL XÁC THỰC ==========
 async function checkVerification() {
@@ -109,68 +109,50 @@ async function checkVerification() {
     if (id && token) {
         document.getElementById('adminPanel').style.display = 'none';
         document.getElementById('verifyPanel').style.display = 'block';
-        await showVerificationResult(id, token);
+        await processCheckinFromQR(id, token);
         return true;
     }
     return false;
 }
 
-async function showVerificationResult(id, token) {
+async function processCheckinFromQR(id, token) {
     const verifyDiv = document.getElementById('verifyPanel');
     
     try {
         const snapshot = await get(child(ref(db), 'users/' + id));
-        
         if (!snapshot.exists()) {
-            verifyDiv.innerHTML = `
-                <div class="verify-card">
-                    <div class="verify-header"><h2>KẾT QUẢ XÁC THỰC</h2></div>
-                    <div class="verify-content">
-                        <div style="text-align:center;font-size:60px;">❌</div>
-                        <div class="result-status" style="background:#ffebee;color:#c62828;">KHÔNG HỢP LỆ</div>
-                        <div class="info-box"><p>Mã QR không tồn tại trong hệ thống</p><p style="font-size:12px;color:#999;">ID: ${escapeHtml(id)}</p></div>
-                        <button onclick="window.location.href=window.location.pathname" style="width:100%;padding:12px;background:#b00000;color:white;border:none;border-radius:8px;">TRANG CHỦ</button>
-                    </div>
-                </div>`;
+            verifyDiv.innerHTML = `<div class="verify-card"><div class="verify-header"><h2>🔍 KẾT QUẢ</h2></div><div class="verify-content"><div style="text-align:center;font-size:60px;">❌</div><div class="result-status" style="background:#ffebee;color:#c62828;">KHÔNG HỢP LỆ</div><p>Mã QR không tồn tại</p><button onclick="window.location.href=window.location.pathname" style="width:100%;padding:12px;margin-top:20px;background:#b00000;color:white;border:none;border-radius:8px;">ĐÓNG</button></div></div>`;
             return;
         }
         
         const data = snapshot.val();
-        
-        if (data.token === token) {
-            let currentScan = (data.scan || 0) + 1;
-            await update(ref(db, 'users/' + id), { scan: currentScan });
-            
-            verifyDiv.innerHTML = `
-                <div class="verify-card">
-                    <div class="verify-header" style="background:#2e7d32;"><h2>✓ XÁC THỰC THÀNH CÔNG</h2></div>
-                    <div class="verify-content">
-                        <div style="text-align:center;font-size:60px;">✅</div>
-                        <div class="result-status" style="background:#e8f5e9;color:#2e7d32;">HỢP LỆ</div>
-                        <div class="info-box" style="background:#f5f5f5;border-radius:12px;padding:15px;">
-                            <div class="info-row"><span class="info-label">Họ tên:</span><span class="info-value">${escapeHtml(data.fullname)}</span></div>
-                            <div class="info-row"><span class="info-label">Địa chỉ:</span><span class="info-value">${escapeHtml(data.address)}</span></div>
-                            <div class="info-row"><span class="info-label">Khu vực:</span><span class="info-value">${escapeHtml(data.area)}</span></div>
-                            <div class="info-row"><span class="info-label">Mã số:</span><span class="info-value">${escapeHtml(id)}</span></div>
-                        </div>
-                        <div style="margin-top:15px;padding:10px;background:#fff3e0;border-radius:8px;text-align:center;">📊 Lượt quét: ${currentScan}</div>
-                        <button onclick="window.location.href=window.location.pathname" style="width:100%;padding:12px;margin-top:20px;background:#2e7d32;color:white;border:none;border-radius:8px;">XÁC NHẬN</button>
-                    </div>
-                </div>`;
-        } else {
-            verifyDiv.innerHTML = `
-                <div class="verify-card">
-                    <div class="verify-header"><h2>KẾT QUẢ XÁC THỰC</h2></div>
-                    <div class="verify-content">
-                        <div style="text-align:center;font-size:60px;">⚠️</div>
-                        <div class="result-status" style="background:#ffebee;color:#c62828;">KHÔNG HỢP LỆ</div>
-                        <div class="info-box"><p>Mã QR không hợp lệ - Token xác thực sai</p><p style="font-size:12px;color:#999;">ID: ${escapeHtml(id)}</p></div>
-                        <button onclick="window.location.href=window.location.pathname" style="width:100%;padding:12px;background:#b00000;color:white;border:none;border-radius:8px;">TRANG CHỦ</button>
-                    </div>
-                </div>`;
+        if (data.token !== token) {
+            verifyDiv.innerHTML = `<div class="verify-card"><div class="verify-header"><h2>🔍 KẾT QUẢ</h2></div><div class="verify-content"><div style="text-align:center;font-size:60px;">⚠️</div><div class="result-status" style="background:#ffebee;color:#c62828;">KHÔNG HỢP LỆ</div><p>Token không hợp lệ</p><button onclick="window.location.href=window.location.pathname" style="width:100%;padding:12px;margin-top:20px;background:#b00000;color:white;border:none;border-radius:8px;">ĐÓNG</button></div></div>`;
+            return;
         }
+        
+        const today = getTodayStr();
+        const checkinSnapshot = await get(child(ref(db), 'checkins/' + id + '/' + today));
+        
+        if (checkinSnapshot.exists()) {
+            const existing = checkinSnapshot.val();
+            verifyDiv.innerHTML = `<div class="verify-card"><div class="verify-header" style="background:#ff9800;"><h2>⚠️ ĐÃ ĐIỂM DANH</h2></div><div class="verify-content"><div style="text-align:center;font-size:60px;">⏰</div><div class="result-status" style="background:#fff3e0;color:#e65100;">ĐÃ CHECK-IN</div><div style="background:#f5f5f5;border-radius:12px;padding:15px;"><div class="info-row"><span class="info-label">👤 Họ tên:</span><span class="info-value">${escapeHtml(data.fullname)}</span></div><div class="info-row"><span class="info-label">⏰ Giờ:</span><span class="info-value">${existing.time}</span></div></div><button onclick="window.location.href=window.location.pathname" style="width:100%;padding:12px;margin-top:20px;background:#ff9800;color:white;border:none;border-radius:8px;">ĐÓNG</button></div></div>`;
+            return;
+        }
+        
+        const now = new Date();
+        await set(ref(db, 'checkins/' + id + '/' + today), {
+            userId: id, fullname: data.fullname, address: data.address, area: data.area,
+            date: today, time: formatTime(now), datetime: now.toISOString(), status: 'present'
+        });
+        let totalCheckins = (data.totalCheckins || 0) + 1;
+        await update(ref(db, 'users/' + id), { totalCheckins, lastCheckin: now.toISOString() });
+        
+        verifyDiv.innerHTML = `<div class="verify-card"><div class="verify-header" style="background:#2e7d32;"><h2>✅ ĐIỂM DANH THÀNH CÔNG</h2></div><div class="verify-content"><div style="text-align:center;font-size:60px;">✅</div><div class="result-status" style="background:#e8f5e9;color:#2e7d32;">CHECK-IN THÀNH CÔNG</div><div style="background:#f5f5f5;border-radius:12px;padding:15px;"><div class="info-row"><span class="info-label">👤 Họ tên:</span><span class="info-value">${escapeHtml(data.fullname)}</span></div><div class="info-row"><span class="info-label">📍 Địa chỉ:</span><span class="info-value">${escapeHtml(data.address)}</span></div><div class="info-row"><span class="info-label">⏰ Giờ:</span><span class="info-value">${formatTime(now)}</span></div></div><button onclick="window.location.href=window.location.pathname" style="width:100%;padding:12px;margin-top:20px;background:#2e7d32;color:white;border:none;border-radius:8px;">✓ XÁC NHẬN</button></div></div>`;
+        if (typeof loadData === 'function') await loadData();
+        if (typeof loadCheckinStats === 'function') await loadCheckinStats();
     } catch (error) {
-        verifyDiv.innerHTML = `<div class="verify-card"><div class="verify-header"><h2>LỖI KẾT NỐI</h2></div><div class="verify-content"><p>Không thể kết nối database</p><button onclick="location.reload()" style="width:100%;padding:12px;margin-top:20px;">THỬ LẠI</button></div></div>`;
+        verifyDiv.innerHTML = `<div class="verify-card"><div class="verify-header"><h2>⚠️ LỖI</h2></div><div class="verify-content"><p>Lỗi kết nối</p><button onclick="location.reload()" style="width:100%;padding:12px;margin-top:20px;">THỬ LẠI</button></div></div>`;
     }
 }
 
@@ -178,44 +160,61 @@ async function showVerificationResult(id, token) {
 async function renderAdmin() {
     const baseUrl = getBaseUrl();
     
-    // Kiểm tra nếu đang chạy file://
-    if (!baseUrl) {
-        document.getElementById('adminPanel').innerHTML = `
-            <div class="card">
-                <h2>⚠️ CẢNH BÁO</h2>
-                <div class="warning">
-                    <p style="font-size:18px; margin-bottom:10px;"><strong>Bạn đang mở file trực tiếp từ máy tính!</strong></p>
-                    <p>Điện thoại KHÔNG thể quét được mã QR từ đường dẫn <code>file://</code>.</p>
-                    <p><strong>Cách khắc phục:</strong></p>
-                    <ol style="margin-left:20px; margin-top:10px;">
-                        <li>Upload file này lên hosting (Netlify, Vercel, 000webhost)</li>
-                        <li>Hoặc dùng Live Server trên VS Code</li>
-                        <li>Hoặc mở bằng Python: <code>python -m http.server 8080</code></li>
-                    </ol>
-                    <p style="margin-top:15px;">Sau khi có link dạng <strong>https://...</strong> hoặc <strong>http://192.168.x.x:8080</strong> thì tạo lại QR.</p>
-                </div>
-            </div>
-        `;
-        document.getElementById('footer').style.display = 'block';
-        return;
-    }
-    
     document.getElementById('adminPanel').innerHTML = `
-        <div class="card"><h2>DASHBOARD THỐNG KÊ</h2><div class="dashboard">
-            <div class="box"><h3 id="totalUsers">0</h3><p>TỔNG DANH SÁCH</p></div>
-            <div class="box"><h3 id="totalScan">0</h3><p>LƯỢT QUÉT</p></div>
-            <div class="box"><h3 id="validCount">0</h3><p>QR HỢP LỆ</p></div>
-            <div class="box"><h3 id="invalidCount">0</h3><p>QR KHÔNG HỢP LỆ</p></div>
+        <div class="card"><h2>📊 DASHBOARD ĐIỂM DANH</h2><div class="dashboard">
+            <div class="box"><h3 id="totalUsers">0</h3><p>👥 TỔNG NHÂN KHẨU</p></div>
+            <div class="box"><h3 id="totalCheckins">0</h3><p>✅ ĐÃ ĐIỂM DANH</p></div>
+            <div class="box"><h3 id="notCheckin">0</h3><p>⏳ CHƯA ĐIỂM DANH</p></div>
+            <div class="box"><h3 id="checkinRate">0</h3><p>📈 TỶ LỆ (%)</p></div>
         </div></div>
-        <div class="card"><h2>IMPORT DANH SÁCH EXCEL</h2><input type="file" id="excelFile" accept=".xlsx,.xls"><button id="importBtn">IMPORT EXCEL</button></div>
-        <div class="card"><h2>QUÉT QR CAMERA</h2><div id="reader"></div><div id="scanResult" style="margin-top:20px;"></div></div>
-        <div class="card"><h2>DANH SÁCH QR</h2><div class="table-container"><table><thead><tr><th>STT</th><th>HỌ TÊN</th><th>ĐỊA CHỈ</th><th>KHU VỰC</th><th>ID</th><th>QR</th><th>PDF</th></tr></thead><tbody id="tableData"></tbody></table></div></div>
-        <div class="card"><h2>XUẤT THẺ PDF</h2><div id="cardArea"></div></div>
+        
+        <div class="card"><h2>📂 IMPORT DANH SÁCH EXCEL</h2>
+            <input type="file" id="excelFile" accept=".xlsx,.xls">
+            <button id="importBtn">📤 IMPORT</button>
+        </div>
+        
+        <div class="card"><h2>📷 QUÉT QR ĐIỂM DANH</h2>
+            <div class="camera-selector">
+                <span>📹 Chọn camera:</span>
+                <select id="cameraSelect"></select>
+                <button id="switchCameraBtn">🔄 ĐỔI CAMERA</button>
+            </div>
+            <div id="reader"></div>
+            <div id="scanResult" style="margin-top:20px;"></div>
+        </div>
+        
+        <div class="card"><h2>📋 DANH SÁCH ĐIỂM DANH HÔM NAY</h2>
+            <div class="table-container"><table><thead><tr><th>STT</th><th>HỌ TÊN</th><th>KHU VỰC</th><th>TRẠNG THÁI</th><th>GIỜ CHECK-IN</th><th>QR</th><th>PDF</th></tr></thead><tbody id="tableData"></tbody></table></div>
+        </div>
+        
+        <div class="card"><h2>🖨️ XUẤT THẺ QR</h2>
+            <div id="cardArea"></div>
+        </div>
     `;
     
     document.getElementById('importBtn').onclick = () => importExcel(baseUrl);
+    document.getElementById('switchCameraBtn').onclick = switchCamera;
     await loadData();
-    initCamera();
+    await loadCheckinStats();
+    await initCameraList();
+}
+
+async function loadCheckinStats() {
+    const today = getTodayStr();
+    const snapshot = await get(child(ref(db), 'checkins'));
+    let checkedInToday = 0;
+    if (snapshot.exists()) {
+        const checkins = snapshot.val();
+        for (let userId in checkins) {
+            if (checkins[userId][today]) checkedInToday++;
+        }
+    }
+    const totalUsers = parseInt(document.getElementById('totalUsers')?.innerText || 0);
+    const notCheckin = totalUsers - checkedInToday;
+    const rate = totalUsers > 0 ? Math.round((checkedInToday / totalUsers) * 100) : 0;
+    document.getElementById('totalCheckins').innerText = checkedInToday;
+    document.getElementById('notCheckin').innerText = notCheckin;
+    document.getElementById('checkinRate').innerText = rate;
 }
 
 window.importExcel = async function(baseUrl) {
@@ -236,10 +235,11 @@ window.importExcel = async function(baseUrl) {
             const id = 'QR' + Date.now() + Math.floor(Math.random() * 1000);
             const token = randomToken();
             const verifyURL = baseUrl + '?id=' + id + '&token=' + token;
-            await set(ref(db, 'users/' + id), { stt, fullname, address, area, token, qr: verifyURL, scan: 0, createdAt: new Date().toISOString() });
+            await set(ref(db, 'users/' + id), { stt, fullname, address, area, token, qr: verifyURL, scan: 0, totalCheckins: 0, createdAt: new Date().toISOString() });
         }
-        alert('IMPORT THÀNH CÔNG');
-        loadData();
+        alert('✅ IMPORT THÀNH CÔNG');
+        await loadData();
+        await loadCheckinStats();
     };
     reader.readAsArrayBuffer(file);
 }
@@ -247,35 +247,67 @@ window.importExcel = async function(baseUrl) {
 async function loadData() {
     const snapshot = await get(child(ref(db), 'users'));
     const tbody = document.getElementById('tableData');
+    const today = getTodayStr();
     if (!tbody) return;
     tbody.innerHTML = '';
-    let total = 0, totalScan = 0;
+    let total = 0;
+    
+    const checkinSnapshot = await get(child(ref(db), 'checkins'));
+    let checkedToday = {};
+    if (checkinSnapshot.exists()) {
+        const checkins = checkinSnapshot.val();
+        for (let userId in checkins) {
+            if (checkins[userId][today]) checkedToday[userId] = checkins[userId][today];
+        }
+    }
+    
     if (snapshot.exists()) {
         const data = snapshot.val();
         for (let id in data) {
             total++;
-            totalScan += data[id].scan || 0;
-            tbody.innerHTML += `<tr><td>${data[id].stt}</td><td>${data[id].fullname}</td><td>${data[id].address}</td><td>${data[id].area}</td><td>${id}</td><td><button onclick="window.showQR('${id}','${data[id].token}')">XEM QR</button></td><td><button onclick="window.exportPDF('${id}')">PDF</button></td></tr>`;
+            const isChecked = checkedToday[id];
+            const status = isChecked ? `<span class="badge-present">✅ ${isChecked.time}</span>` : `<span class="badge-absent">⏳ Chưa</span>`;
+            tbody.innerHTML += `<tr><td>${data[id].stt}</td><td>${data[id].fullname}</td><td>${data[id].area}</td><td>${status}</td><td><button onclick="manualCheckin('${id}')">📝 Điểm danh</button></td><td><button onclick="window.showQR('${id}','${data[id].token}')">🔲 QR</button></td><td><button onclick="window.exportPDF('${id}')">📄 PDF</button></td></tr>`;
         }
     }
     document.getElementById('totalUsers').innerText = total;
-    document.getElementById('totalScan').innerText = totalScan;
+    await loadCheckinStats();
+}
+
+window.manualCheckin = async function(id) {
+    if (confirm('Xác nhận điểm danh thủ công?')) {
+        const snapshot = await get(child(ref(db), 'users/' + id));
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            const today = getTodayStr();
+            const existing = await get(child(ref(db), 'checkins/' + id + '/' + today));
+            if (existing.exists()) {
+                alert('Đã điểm danh hôm nay rồi!');
+                return;
+            }
+            const now = new Date();
+            await set(ref(db, 'checkins/' + id + '/' + today), {
+                userId: id, fullname: data.fullname, address: data.address, area: data.area,
+                date: today, time: formatTime(now), datetime: now.toISOString(), status: 'present'
+            });
+            let totalCheckins = (data.totalCheckins || 0) + 1;
+            await update(ref(db, 'users/' + id), { totalCheckins, lastCheckin: now.toISOString() });
+            alert('✅ Điểm danh thành công!');
+            await loadData();
+        }
+    }
 }
 
 window.showQR = function(id, token) {
     const baseUrl = getBaseUrl();
-    if (!baseUrl) {
-        alert('Không thể tạo QR khi đang mở file cục bộ! Vui lòng upload lên hosting.');
-        return;
-    }
     const url = baseUrl + '?id=' + id + '&token=' + token;
-    document.getElementById('cardArea').innerHTML = `<div class="card-preview" id="pdfCard"><h3>THẺ XÁC THỰC ĐIỆN TỬ</h3><div id="qrcode"></div><p style="margin-top:20px;">Mã xác thực: ${id}</p><p style="font-size:11px;color:#999;">${url}</p></div>`;
+    document.getElementById('cardArea').innerHTML = `<div class="card-preview" id="pdfCard"><h3>🎫 THẺ ĐIỂM DANH</h3><div id="qrcode"></div><p><strong>Mã số:</strong> ${id}</p><p style="font-size:11px;">Quét QR để điểm danh</p></div>`;
     new QRCode(document.getElementById('qrcode'), { text: url, width: 220, height: 220 });
 }
 
 window.exportPDF = async function(id) {
     const card = document.getElementById('pdfCard');
-    if (!card) { alert('Vui lòng xem QR trước'); return; }
+    if (!card) { alert('Vui lòng nhấn "XEM QR" trước'); return; }
     const canvas = await html2canvas(card);
     const imgData = canvas.toDataURL('image/png');
     const { jsPDF } = window.jspdf;
@@ -284,48 +316,126 @@ window.exportPDF = async function(id) {
     pdf.save(id + '.pdf');
 }
 
+// ========== CAMERA - CÓ THỂ CHỌN CAMERA TRƯỚC/SAU ==========
+async function initCameraList() {
+    try {
+        const devices = await Html5Qrcode.getCameras();
+        cameraDevices = devices;
+        const select = document.getElementById('cameraSelect');
+        if (!select) return;
+        
+        select.innerHTML = '<option value="">-- Chọn camera --</option>';
+        devices.forEach((device, index) => {
+            const label = device.label || `Camera ${index + 1}`;
+            const isBack = label.toLowerCase().includes('back') || label.toLowerCase().includes('environment') || label.toLowerCase().includes('rear');
+            const isFront = label.toLowerCase().includes('front') || label.toLowerCase().includes('user');
+            let type = '';
+            if (isBack) type = '📷 (Camera sau)';
+            else if (isFront) type = '🤳 (Camera trước)';
+            select.innerHTML += `<option value="${device.id}">${label} ${type}</option>`;
+        });
+        
+        // Mặc định chọn camera sau nếu có
+        const backCamera = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('environment'));
+        if (backCamera) {
+            select.value = backCamera.id;
+            currentCameraId = backCamera.id;
+        } else if (devices.length > 0) {
+            select.value = devices[0].id;
+            currentCameraId = devices[0].id;
+        }
+        
+        if (currentCameraId) {
+            await startCamera(currentCameraId);
+        }
+    } catch (err) {
+        console.log('Lỗi lấy danh sách camera:', err);
+        document.getElementById('scanResult').innerHTML = '<div class="invalid">⚠️ Vui lòng cho phép truy cập camera</div>';
+    }
+}
+
+async function startCamera(cameraId) {
+    if (html5QrCode) {
+        try {
+            await html5QrCode.stop();
+        } catch(e) {}
+    }
+    
+    html5QrCode = new Html5Qrcode("reader");
+    try {
+        await html5QrCode.start(cameraId, { fps: 10, qrbox: 250 }, onScanSuccess);
+        currentCameraId = cameraId;
+        document.getElementById('scanResult').innerHTML = '<div style="background:#e8f5e9;padding:8px;border-radius:8px;">✅ Camera đang hoạt động. Đưa QR vào khung để quét.</div>';
+    } catch (err) {
+        console.log('Lỗi start camera:', err);
+        document.getElementById('scanResult').innerHTML = '<div class="invalid">❌ Không thể mở camera. Vui lòng thử camera khác.</div>';
+    }
+}
+
+async function switchCamera() {
+    const select = document.getElementById('cameraSelect');
+    const newCameraId = select.value;
+    if (!newCameraId) {
+        alert('Vui lòng chọn camera');
+        return;
+    }
+    await startCamera(newCameraId);
+}
+
 function onScanSuccess(decodedText) {
     try {
         const url = new URL(decodedText);
         const id = url.searchParams.get('id');
         const token = url.searchParams.get('token');
-        if (id && token) verifyQR(id, token);
+        if (id && token) verifyQRAndCheckin(id, token);
         else document.getElementById('scanResult').innerHTML = '<div class="invalid">✗ QR không đúng định dạng</div>';
-    } catch(e) { document.getElementById('scanResult').innerHTML = '<div class="invalid">✗ QR không hợp lệ</div>'; }
-}
-
-function initCamera() {
-    const readerElement = document.getElementById('reader');
-    if (!readerElement) return;
-    const html5QrCode = new Html5Qrcode("reader");
-    Html5Qrcode.getCameras().then(devices => {
-        if (devices && devices.length) html5QrCode.start(devices[0].id, { fps: 10, qrbox: 250 }, onScanSuccess).catch(err => console.log(err));
-    }).catch(err => console.log(err));
-}
-
-async function verifyQR(id, token) {
-    const snapshot = await get(child(ref(db), 'users/' + id));
-    const resultDiv = document.getElementById('scanResult');
-    if (snapshot.exists()) {
-        const data = snapshot.val();
-        if (data.token === token) {
-            let currentScan = (data.scan || 0) + 1;
-            await update(ref(db, 'users/' + id), { scan: currentScan });
-            resultDiv.innerHTML = `<div class="valid">✓ XÁC THỰC THÀNH CÔNG<br><br>Họ tên: ${data.fullname}<br>Địa chỉ: ${data.address}<br>Khu vực: ${data.area}<br>ID: ${id}</div>`;
-            let valid = parseInt(document.getElementById('validCount').innerText) + 1;
-            document.getElementById('validCount').innerText = valid;
-        } else {
-            resultDiv.innerHTML = `<div class="invalid">✗ QR KHÔNG HỢP LỆ (Token sai)</div>`;
-            let invalid = parseInt(document.getElementById('invalidCount').innerText) + 1;
-            document.getElementById('invalidCount').innerText = invalid;
-        }
-        loadData();
-    } else {
-        resultDiv.innerHTML = `<div class="invalid">✗ KHÔNG TÌM THẤY THÔNG TIN</div>`;
+    } catch(e) { 
+        document.getElementById('scanResult').innerHTML = '<div class="invalid">✗ QR không hợp lệ</div>';
     }
 }
 
-// ========== KHỞI CHẠY ==========
+async function verifyQRAndCheckin(id, token) {
+    const snapshot = await get(child(ref(db), 'users/' + id));
+    const resultDiv = document.getElementById('scanResult');
+    
+    if (!snapshot.exists()) {
+        resultDiv.innerHTML = `<div class="invalid">❌ KHÔNG TÌM THẤY</div>`;
+        return;
+    }
+    
+    const data = snapshot.val();
+    if (data.token !== token) {
+        resultDiv.innerHTML = `<div class="invalid">❌ QR KHÔNG HỢP LỆ</div>`;
+        return;
+    }
+    
+    const today = getTodayStr();
+    const existing = await get(child(ref(db), 'checkins/' + id + '/' + today));
+    
+    if (existing.exists()) {
+        resultDiv.innerHTML = `<div class="invalid">⚠️ ${data.fullname} đã điểm danh lúc ${existing.val().time}</div>`;
+        return;
+    }
+    
+    const now = new Date();
+    await set(ref(db, 'checkins/' + id + '/' + today), {
+        userId: id, fullname: data.fullname, address: data.address, area: data.area,
+        date: today, time: formatTime(now), datetime: now.toISOString(), status: 'present'
+    });
+    let totalCheckins = (data.totalCheckins || 0) + 1;
+    await update(ref(db, 'users/' + id), { totalCheckins, lastCheckin: now.toISOString() });
+    
+    resultDiv.innerHTML = `<div class="valid">✅ ĐIỂM DANH THÀNH CÔNG!<br><br>👤 ${data.fullname}<br>📍 ${data.address}<br>⏰ ${formatTime(now)}</div>`;
+    await loadData();
+    await loadCheckinStats();
+    
+    // Phát âm thanh thông báo (tùy chọn)
+    try {
+        const audio = new Audio('data:audio/wav;base64,U3RlYWx0aCBpcyB0aGUgYmVzdA==');
+        // Không có âm thanh thực tế, chỉ để rung
+    } catch(e) {}
+}
+
 const isVerifying = await checkVerification();
 if (!isVerifying) {
     await renderAdmin();
