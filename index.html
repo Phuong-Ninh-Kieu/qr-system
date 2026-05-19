@@ -25,13 +25,13 @@ button:active{opacity:0.8;}
 .btn-blue{background:#2196f3;}
 .btn-manual{background:#9c27b0;}
 .btn-purple{background:#673ab7;}
+.btn-gray{background:#666;}
 input{padding:12px;border:1px solid #ccc;border-radius:10px;margin:5px;}
 .table-container{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:12px;}
 th{background:#b00000;color:#fff;padding:8px;}
 td{border:1px solid #ddd;padding:6px;text-align:center;}
 #qr-reader{width:100%;max-width:100%;margin:auto;min-height:300px;}
-#qr-reader__dashboard_section_csr span{font-size:12px;}
 .card-preview{width:280px;margin:auto;border:2px solid #b00000;padding:15px;border-radius:16px;background:#fff;}
 .footer{text-align:center;padding:15px;color:#666;font-size:11px;}
 .badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:bold;}
@@ -46,6 +46,8 @@ td{border:1px solid #ddd;padding:6px;text-align:center;}
 .camera-selector button{background:#2196f3;padding:8px 16px;margin:0;}
 .select-all{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:5px;}
 .select-all input{width:18px;height:18px;margin:0;}
+#qr-reader{min-height:350px;}
+#qr-reader__dashboard_section_csr button{background:#2196f3;color:white;}
 </style>
 </head>
 <body>
@@ -86,7 +88,6 @@ const db = getDatabase(app);
 let html5QrCode = null;
 let allUsersData = [];
 let isScanning = false;
-let currentCameraId = null;
 
 function randomToken(len=20){let s='';for(let i=0;i<len;i++)s+='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(Math.random()*62)];return s;}
 function escapeHtml(s){if(!s)return'';return s.replace(/[&<>]/g,function(m){return m==='&'?'&amp;':m==='<'?'&lt;':m==='>'?'&gt;':m;});}
@@ -184,7 +185,7 @@ async function renderAdmin(){
             <div class="camera-selector">
                 <span>📹 Chọn camera:</span>
                 <select id="cameraSelect"></select>
-                <button id="switchCameraBtn">🔄 Đổi camera</button>
+                <button id="switchCameraBtn">🔄 Bật camera đã chọn</button>
             </div>
             <div id="qr-reader"></div>
             <div id="scanResult" style="margin-top:12px;font-size:13px;text-align:center;"></div>
@@ -201,7 +202,10 @@ async function renderAdmin(){
                 <input type="checkbox" id="selectAllCheckbox"> 
                 <label for="selectAllCheckbox">Chọn tất cả để xuất PDF</label>
             </div>
-            <div class="table-container">\n<table><thead><tr><th style="width:30px;"><input type="checkbox" id="headerCheckbox"></th><th>STT</th><th>HỌ TÊN</th><th>KHU VỰC</th><th>TRẠNG THÁI</th><th>THAO TÁC</th></tr></thead><tbody id="tableData"></tbody></table></div>
+            <div class="table-container">\n<table>
+                <thead><tr><th style="width:30px;"><input type="checkbox" id="headerCheckbox"></th><th>STT</th><th>HỌ TÊN</th><th>KHU VỰC</th><th>TRẠNG THÁI</th><th>THAO TÁC</th></tr></thead>
+                <tbody id="tableData"></tbody>
+            </table></div>
         </div>
         
         <div class="card"><h2>🖨️ XEM THẺ QR</h2><div id="cardArea"></div></div>
@@ -248,8 +252,6 @@ async function exportMultiplePDF(){
         let pdfBlob = await generateSinglePDF(user);
         let fileName = removeVietnameseTones(user.fullname) + '_' + user.userId + '.pdf';
         zip.file(fileName, pdfBlob);
-        
-        // Cập nhật tiến trình
         document.getElementById('scanResult').innerHTML = `⏳ Đang xuất: ${count}/${selectedUsers.length}`;
     }
     
@@ -267,7 +269,6 @@ async function exportMultiplePDF(){
 
 async function generateSinglePDF(user){
     return new Promise(async (resolve) => {
-        // Tạo thẻ tạm thời
         let tempDiv = document.createElement('div');
         tempDiv.style.position = 'absolute';
         tempDiv.style.left = '-9999px';
@@ -275,7 +276,7 @@ async function generateSinglePDF(user){
         tempDiv.innerHTML = `
             <div style="width:300px;border:2px solid #b00000;padding:20px;border-radius:16px;background:#fff;text-align:center;">
                 <h3 style="color:#b00000;margin-bottom:15px;">🎫 THẺ ĐIỂM DANH</h3>
-                <div id="temp_qrcode_${user.userId}"></div>
+                <div id="temp_qrcode_${user.userId.replace(/[^a-zA-Z0-9]/g, '_')}"></div>
                 <p style="margin-top:15px;"><strong>${escapeHtml(user.fullname)}</strong></p>
                 <p style="font-size:12px;color:#666;">Mã: ${user.userId}</p>
                 <p style="font-size:11px;margin-top:10px;">Quét QR để điểm danh</p>
@@ -284,7 +285,8 @@ async function generateSinglePDF(user){
         document.body.appendChild(tempDiv);
         
         let url = getBaseUrl() + '?id=' + user.userId + '&token=' + user.token;
-        new QRCode(document.getElementById(`temp_qrcode_${user.userId}`), { text: url, width: 200, height: 200 });
+        let qrcodeDiv = document.getElementById(`temp_qrcode_${user.userId.replace(/[^a-zA-Z0-9]/g, '_')}`);
+        new QRCode(qrcodeDiv, { text: url, width: 200, height: 200 });
         
         setTimeout(async () => {
             let canvas = await html2canvas(tempDiv.querySelector('div'));
@@ -312,42 +314,59 @@ async function initCameraList(){
             let label = device.label || `Camera ${index + 1}`;
             let isBack = label.toLowerCase().includes('back') || label.toLowerCase().includes('environment') || label.toLowerCase().includes('rear');
             let isFront = label.toLowerCase().includes('front') || label.toLowerCase().includes('user');
-            let type = isBack ? '📷 (Sau)' : (isFront ? '🤳 (Trước)' : '📹');
-            select.innerHTML += `<option value="${device.id}">${type} ${label.substring(0,40)}</option>`;
+            let type = isBack ? '📷 (Camera sau)' : (isFront ? '🤳 (Camera trước)' : '📹');
+            select.innerHTML += `<option value="${device.id}">${type} - ${label.substring(0,40)}</option>`;
         });
         
+        // Mặc định chọn camera sau
         let backCamera = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('environment'));
         if(backCamera){
             select.value = backCamera.id;
-            currentCameraId = backCamera.id;
+            await startCamera(backCamera.id);
         } else if(devices.length > 0){
             select.value = devices[0].id;
-            currentCameraId = devices[0].id;
+            await startCamera(devices[0].id);
+        } else {
+            document.getElementById('scanResult').innerHTML = '❌ Không tìm thấy camera nào';
         }
-        
-        if(currentCameraId) await startCamera(currentCameraId);
     } catch(err){
+        console.log(err);
         document.getElementById('scanResult').innerHTML = '⚠️ Vui lòng cho phép truy cập camera';
     }
 }
 
 async function startCamera(cameraId){
+    // Dừng và cleanup hoàn toàn camera cũ
     if(html5QrCode){
-        try{ await html5QrCode.stop(); } catch(e){}
-        try{ html5QrCode.clear(); } catch(e){}
+        try {
+            await html5QrCode.stop();
+        } catch(e) {}
+        try {
+            await html5QrCode.clear();
+        } catch(e) {}
+        html5QrCode = null;
     }
     
+    // Xóa nội dung reader cũ
+    let readerDiv = document.getElementById('qr-reader');
+    if(readerDiv){
+        readerDiv.innerHTML = '';
+    }
+    
+    // Tạo mới Html5Qrcode
     html5QrCode = new Html5Qrcode("qr-reader");
+    
     try{
         await html5QrCode.start(cameraId, {
             fps: 10,
-            qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0
+            qrbox: { width: 250, height: 250 }
         }, onScanSuccess, onScanError);
         
-        let cameraName = document.getElementById('cameraSelect').options[document.getElementById('cameraSelect').selectedIndex]?.text || 'Camera';
-        document.getElementById('scanResult').innerHTML = `✅ ${cameraName} đã sẵn sàng! Đưa QR vào khung.`;
+        let select = document.getElementById('cameraSelect');
+        let selectedText = select.options[select.selectedIndex]?.text || 'Camera';
+        document.getElementById('scanResult').innerHTML = `✅ ${selectedText} đang hoạt động! Đưa QR vào khung.`;
     } catch(err){
+        console.log('Start camera error:', err);
         document.getElementById('scanResult').innerHTML = `⚠️ Không thể mở camera. Vui lòng kiểm tra quyền truy cập.`;
     }
 }
@@ -359,8 +378,8 @@ async function switchCamera(){
         alert('Vui lòng chọn camera');
         return;
     }
-    currentCameraId = newCameraId;
-    await startCamera(currentCameraId);
+    document.getElementById('scanResult').innerHTML = `⏳ Đang chuyển sang camera mới...`;
+    await startCamera(newCameraId);
 }
 
 function onScanSuccess(decodedText){
@@ -383,7 +402,9 @@ function onScanSuccess(decodedText){
     setTimeout(() => { isScanning = false; }, 2000);
 }
 
-function onScanError(error){}
+function onScanError(error){
+    // Không hiển thị lỗi liên tục
+}
 
 async function processScan(id, token){
     let snap = await get(child(ref(db), 'users/' + id));
@@ -466,7 +487,6 @@ async function loadData(){
     let rate = total > 0 ? Math.round(checkedCount / total * 100) : 0;
     document.getElementById('checkinRate').innerText = rate;
     
-    // Gắn sự kiện cho header checkbox
     let headerCb = document.getElementById('headerCheckbox');
     if(headerCb){
         headerCb.onchange = (e) => selectAll(e.target.checked);
