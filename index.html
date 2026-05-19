@@ -2,816 +2,615 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>HỆ THỐNG QR NHẬN QUÀ</title>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-<script src="https://unpkg.com/html5-qrcode"></script>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<title>ĐIỂM DANH NHẬN QUÀ</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Tahoma;
-}
-
-body{
-    background:#eef2f7;
-}
-
-.header{
-    background:#b30000;
-    color:white;
-    padding:20px;
-    text-align:center;
-    border-bottom:5px solid #ffcc00;
-}
-
-.header h1{
-    font-size:30px;
-}
-
-.container{
-    width:95%;
-    max-width:1400px;
-    margin:20px auto;
-}
-
-.card{
-    background:white;
-    border-radius:10px;
-    padding:20px;
-    margin-bottom:20px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.1);
-}
-
-.card h2{
-    color:#b30000;
-    margin-bottom:15px;
-}
-
-.dashboard{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-    gap:20px;
-}
-
-.box{
-    background:#b30000;
-    color:white;
-    padding:20px;
-    border-radius:10px;
-    text-align:center;
-}
-
-.box h3{
-    font-size:36px;
-}
-
-input,button{
-    padding:10px;
-    border-radius:5px;
-    border:1px solid #ccc;
-    margin:5px;
-}
-
-button{
-    background:#b30000;
-    color:white;
-    font-weight:bold;
-    cursor:pointer;
-}
-
-button:hover{
-    opacity:0.9;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-table th{
-    background:#b30000;
-    color:white;
-    padding:10px;
-}
-
-table td{
-    border:1px solid #ddd;
-    padding:10px;
-    text-align:center;
-}
-
-#reader{
-    width:100%;
-    max-width:500px;
-    margin:auto;
-}
-
-.verify-card{
-    text-align:center;
-    padding:20px;
-}
-
-.verify-card h3{
-    margin-bottom:15px;
-}
-
-.success{
-    color:green;
-    font-size:24px;
-    font-weight:bold;
-}
-
-.error{
-    color:red;
-    font-size:24px;
-    font-weight:bold;
-}
-
-.footer{
-    text-align:center;
-    padding:20px;
-    color:#666;
-}
-
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Roboto',sans-serif;}
+body{background:#f0f2f5;padding:16px;}
+.header{background:#b00000;color:#fff;padding:16px;text-align:center;border-radius:12px 12px 0 0;margin:-16px -16px 0 -16px;}
+.header h1{font-size:20px;margin-bottom:4px;}
+.header p{font-size:12px;opacity:0.9;}
+.container{max-width:1200px;margin:16px auto;}
+.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+.card h2{color:#b00000;font-size:16px;margin-bottom:12px;border-left:3px solid #b00000;padding-left:10px;}
+.dashboard{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+.box{background:#b00000;color:#fff;padding:12px;border-radius:12px;text-align:center;}
+.box h3{font-size:24px;}
+.box p{font-size:11px;}
+button{background:#b00000;color:#fff;padding:8px 14px;border:none;border-radius:8px;font-size:13px;font-weight:bold;cursor:pointer;margin:4px;}
+button:active{opacity:0.8;}
+.btn-green{background:#2e7d32;}
+.btn-blue{background:#2196f3;}
+.btn-orange{background:#ff9800;}
+.btn-purple{background:#673ab7;}
+input,select{padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;}
+.table-container{overflow-x:auto;margin-top:12px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{background:#b00000;color:#fff;padding:8px;position:sticky;top:0;}
+td{border:1px solid #eee;padding:8px;text-align:center;}
+.badge-success{background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:16px;font-size:11px;}
+.badge-warning{background:#ffebee;color:#c62828;padding:2px 8px;border-radius:16px;font-size:11px;}
+.search-box{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.search-box input{flex:2;min-width:150px;}
+.search-box select{width:120px;}
+.verify-card{max-width:400px;margin:40px auto;background:#fff;border-radius:20px;text-align:center;padding:30px;box-shadow:0 4px 15px rgba(0,0,0,0.15);}
+.verify-card h3{margin-bottom:15px;font-size:18px;}
+.verify-card p{font-size:14px;color:#555;margin-bottom:20px;line-height:1.5;}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:1000;justify-content:center;align-items:center;}
+.modal-content{background:#fff;border-radius:20px;padding:20px;max-width:350px;width:90%;text-align:center;}
+.login-form{max-width:350px;margin:50px auto;background:#fff;border-radius:20px;padding:25px;}
+.login-form h2{text-align:center;color:#b00000;margin-bottom:20px;}
+.login-form input{width:100%;margin-bottom:12px;}
+.footer{text-align:center;padding:16px;color:#999;font-size:11px;}
+.admin-content{display:none;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+#hiddenQrEngine { position: absolute; top: -9999px; left: -9999px; visibility: hidden; }
 </style>
 </head>
-
 <body>
 
 <div class="header">
-    <h1>HỆ THỐNG QR NHẬN QUÀ</h1>
-    <p>ỦY BAN NHÂN DÂN PHƯỜNG</p>
+    <h1>🏛️ ĐIỂM DANH NHẬN QUÀ</h1>
+    <p>Ủy ban nhân dân</p>
 </div>
 
-<div class="container">
+<div id="hiddenQrEngine"></div>
 
-    <div class="card">
-
-        <h2>DASHBOARD THỐNG KÊ</h2>
-
-        <div class="dashboard">
-
-            <div class="box">
-                <h3 id="tongDanhsach">0</h3>
-                <p>TỔNG DANH SÁCH</p>
-            </div>
-
-            <div class="box">
-                <h3 id="daNhan">0</h3>
-                <p>ĐÃ NHẬN</p>
-            </div>
-
-            <div class="box">
-                <h3 id="chuaNhan">0</h3>
-                <p>CHƯA NHẬN</p>
-            </div>
-
-            <div class="box">
-                <h3 id="tongQuet">0</h3>
-                <p>LƯỢT QUÉT</p>
-            </div>
-
-        </div>
-
+<div id="loginPanel" class="container">
+    <div class="login-form">
+        <h2>🔐 ĐĂNG NHẬN</h2>
+        <input type="password" id="adminPassword" placeholder="Mật khẩu quản trị">
+        <button id="loginBtn" style="width:100%;">Đăng nhập</button>
+        <div id="loginError" style="color:#c62828;margin-top:10px;text-align:center;display:none;">❌ Sai mật khẩu</div>
     </div>
-
-    <div class="card">
-
-        <h2>IMPORT DANH SÁCH EXCEL</h2>
-
-        <input type="file" id="excelFile" accept=".xlsx,.xls">
-
-        <button onclick="importExcel()">IMPORT EXCEL</button>
-
-    </div>
-
-    <div class="card">
-
-        <h2>📷 QUÉT QR CAMERA</h2>
-
-        <div id="reader"></div>
-
-        <div id="scanResult" style="margin-top:20px;"></div>
-
-    </div>
-
-    <div class="card">
-
-        <h2>DANH SÁCH QR</h2>
-
-        <table>
-
-            <thead>
-
-                <tr>
-                    <th>STT</th>
-                    <th>HỌ TÊN</th>
-                    <th>ĐỊA CHỈ</th>
-                    <th>KHU VỰC</th>
-                    <th>TRẠNG THÁI</th>
-                    <th>QR</th>
-                </tr>
-
-            </thead>
-
-            <tbody id="tableData"></tbody>
-
-        </table>
-
-    </div>
-
 </div>
 
-<div class="footer">
+<div id="adminPanel" class="container admin-content"></div>
+<div id="verifyPanel" style="display:none;"></div>
 
-HỆ THỐNG QR XÁC THỰC ĐIỆN TỬ
-
+<div id="qrModal" class="modal">
+    <div class="modal-content">
+        <span style="float:right;font-size:24px;cursor:pointer;" onclick="document.getElementById('qrModal').style.display='none'">&times;</span>
+        <div id="modalQR" style="display:flex;justify-content:center;margin:15px 0;"></div>
+        <div id="modalInfo"></div>
+        <button onclick="printQR()" style="width:100%;margin-top:10px;">🖨️ In mẫu lẻ</button>
+    </div>
 </div>
+<div class="footer admin-content">Hệ thống điểm danh nhận quà | <a href="#" onclick="logout(); return false;" style="color: #fff; text-decoration: underline;">Đăng xuất cán bộ</a></div>
 
-<script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 
-// ==========================
-// FIREBASE CONFIG
-// ==========================
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, set, get, child, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = { 
-  apiKey : "AIzaSyCnrj2LgPIhmHQ-2gFsj2WzEa1n0RzWrbw" , 
-  authDomain : "van-ban-65d6c.firebaseapp.com" , 
-  databaseURL : "https://van-ban-65d6c-default-rtdb.asia-southeast1.firebasedatabase.app" , 
-  projectId : "van-ban-65d6c" , 
-  storageBucket : "van-ban-65d6c.firebasestorage.app" , 
-  messagingSenderId : "841852290034" , 
-  appId : "1:841852290034:web:21b9c176c86420b9f6216b" 
+    apiKey: "AIzaSyCnrj2LgPIhmHQ-2gFsj2WzEa1n0RzWrbw",
+    authDomain: "van-ban-65d6c.firebaseapp.com",
+    databaseURL: "https://van-ban-65d6c-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "van-ban-65d6c",
+    storageBucket: "van-ban-65d6c.firebasestorage.app",
+    messagingSenderId: "841852290034",
+    appId: "1:841852290034:web:21b9c176c86420b9f6216b"
 };
 
-firebase.initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-const db = firebase.database();
+let allRecipients = [];
+let currentQR = null;
+const ADMIN_PASSWORD = "ubnd2024";
 
-// ==========================
-// TOKEN RANDOM
-// ==========================
+// ==========================================
+// LUỒNG ĐIỀU HƯỚNG QUAY LẠI MÀN HÌNH QUẢN TRỊ ĐỂ QUÉT TIẾP
+// ==========================================
+window.backToScanner = function() {
+    // Trở về địa chỉ gốc (bỏ đi đoạn ?id=...), do đã lưu cấu hình đăng nhập nên trang sẽ tự động vào màn hình quét
+    window.location.href = window.location.href.split('?')[0];
+};
 
-function randomToken(length = 32){
+// Đăng xuất khi cán bộ muốn đổi thiết bị hoặc bàn giao máy
+window.logout = function() {
+    localStorage.removeItem('isAdminLoggedIn');
+    window.location.reload();
+};
 
-    const chars =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+function escapeHtml(s){if(!s)return'';return s.replace(/[&<>]/g,function(m){return m==='&'?'&amp;':m==='<'?'&lt;':m==='>'?'&gt;':m;});}
+function formatTime(d){return d.toLocaleTimeString('vi-VN');}
+function formatDate(d){return d.toLocaleDateString('vi-VN');}
+function getTodayStr(){return new Date().toISOString().split('T')[0];}
+function getBaseUrl(){return window.location.href.split('?')[0];}
+function randomId(){return 'HD' + Date.now() + Math.floor(Math.random()*10000);}
 
-    let result = '';
-
-    for(let i=0;i<length;i++){
-
-        result += chars.charAt(
-            Math.floor(Math.random() * chars.length)
-        );
+// XỬ LÝ QUÉT MÃ QR KHÔNG QUA ĐĂNG NHẬP
+async function checkVerification(){
+    let id = new URLSearchParams(location.search).get('id');
+    if(id){
+        document.getElementById('loginPanel').style.display = 'none';
+        if(document.getElementById('adminPanel')) document.getElementById('adminPanel').style.display = 'none';
+        document.getElementById('verifyPanel').style.display = 'block';
+        await renderVerifyInterface(id);
+        return true;
     }
-
-    return result;
+    return false;
 }
 
-// ==========================
-// IMPORT EXCEL
-// ==========================
+async function renderVerifyInterface(id){
+    let div = document.getElementById('verifyPanel');
+    try{
+        let snap = await get(child(ref(db), 'recipients/'+id));
+        if(!snap.exists()){
+            div.innerHTML = `
+                <div class="verify-card">
+                    <h3 style="color:#c62828;">❌ MÃ KHÔNG HỢP LỆ</h3>
+                    <p>Mã định danh này không tồn tại trên hệ thống.</p>
+                    <button class="btn-orange" onclick="backToScanner()" style="width:100%;padding:12px;font-size:14px;">Quay lại màn hình chính</button>
+                </div>`;
+            return;
+        }
+        
+        let data = snap.val();
+        let today = getTodayStr();
+        let received = await get(child(ref(db), 'received/'+id+'/'+today));
+        
+        // TRƯỜNG HỢP ĐÃ ĐIỂM DANH -> CHUYỂN NGAY VỀ MÀN HÌNH CHỜ QUÉT
+        if(received.exists()){
+            div.innerHTML = `
+                <div class="verify-card">
+                    <h3 style="color:#ff9800;">⚠️ ĐÃ NHẬN QUÀ RỒI</h3>
+                    <p>Danh tính: <strong>${escapeHtml(data.hoTen)}</strong><br>Địa chỉ: ${escapeHtml(data.diaChi)}</p>
+                    <div style="background:#fff3e0;padding:12px;border-radius:8px;margin-bottom:20px;font-size:13px;color:#e65100;">
+                        Quà đã được phát vào lúc: <b>${received.val().time}</b> hôm nay.
+                    </div>
+                    <button class="btn-orange" onclick="backToScanner()" style="width:100%;padding:12px;font-size:14px;">Tiếp tục quét mã mới</button>
+                </div>`;
+            return;
+        }
+        
+        // TRƯỜNG HỢP HỢP LỆ VÀ CHƯA NHẬN
+        div.innerHTML = `
+            <div class="verify-card">
+                <h3 style="color:#2e7d32;">📋 THÔNG TIN ĐIỂM DANH</h3>
+                <p style="text-align:left;background:#f5f5f5;padding:15px;border-radius:8px;">
+                    • <b>Họ tên:</b> ${escapeHtml(data.hoTen)}<br>
+                    • <b>Địa chỉ:</b> ${escapeHtml(data.diaChi)}<br>
+                    • <b>Diện:</b> ${escapeHtml(data.thuocDien || '---')}<br>
+                    • <b>Khu vực:</b> ${escapeHtml(data.khuVuc || '---')}
+                </p>
+                <button id="confirmCheckinBtn" class="btn-green" style="width:100%;padding:14px;font-size:15px;margin-top:10px;">✅ Xác Nhận Nhận Quà</button>
+            </div>`;
+            
+        document.getElementById('confirmCheckinBtn').onclick = async () => {
+            let btn = document.getElementById('confirmCheckinBtn');
+            btn.innerHTML = "⏳ Đang ghi dữ liệu...";
+            btn.disabled = true;
+            
+            let now = new Date();
+            await set(ref(db, 'received/'+id+'/'+today), {
+                id, hoTen: data.hoTen, diaChi: data.diaChi,
+                time: formatTime(now), datetime: now.toISOString()
+            });
+            await update(ref(db, 'recipients/'+id), { received: true, receivedTime: formatTime(now) });
+            
+            div.innerHTML = `
+                <div class="verify-card">
+                    <h3 style="color:#2e7d32;">✅ NHẬN QUÀ THÀNH CÔNG</h3>
+                    <p>Hệ thống đã ghi nhận điểm danh thành công lúc ${formatTime(now)}.</p>
+                    <p style="margin-top:10px;color:#666;">
+                        Đang chuyển về màn hình quét...
+                    </p>
+                </div>`;
+            setTimeout(() => {
+                backToScanner();
+            }, 2000);
+        };
+
+    }catch(e){ 
+        div.innerHTML = `<div class="verify-card"><h3 style="color:#c62828;">❌ LỖI KẾT NỐI</h3><p>${e.message}</p><button onclick="location.reload()">Thử lại</button></div>`; 
+    }
+}
+
+// HÀM ĐỔI URL THÀNH ẢNH BASE64 ĐỂ CHÈN EXCEL
+function generateBase64Qr(text) {
+    return new Promise((resolve) => {
+        let container = document.getElementById('hiddenQrEngine');
+        container.innerHTML = '';
+        new QRCode(container, {
+            text: text,
+            width: 150,
+            height: 150,
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        setTimeout(() => {
+            let img = container.querySelector('img');
+            if (img) resolve(img.src.split(',')[1]);
+            else {
+                let canvas = container.querySelector('canvas');
+                resolve(canvas.toDataURL().split(',')[1]);
+            }
+        }, 100);
+    });
+}
+
+// XUẤT FILE EXCEL ĐÍNH KÈM HÌNH ẢNH MÃ QR TRỰC TIẾP
+async function exportExcelWithQR(){
+    if(allRecipients.length===0){ alert('Không có dữ liệu để xuất'); return; }
+    let btn = document.getElementById('exportQrBtn');
+    let oldText = btn.innerHTML;
+    btn.innerHTML = '⏳ Đang vẽ QR...';
+    btn.disabled = true;
+    
+    try{
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('DanhSachAnhQR');
+        
+        worksheet.addRow(['STT', 'HỌ VÀ TÊN', 'ĐỊA CHỈ', 'THUỘC DIỆN', 'KHU VỰC', 'GHI CHÚ', 'MÃ ĐIỂM DANH (QR)']);
+        
+        worksheet.columns = [
+            { width: 8, style: { alignment: { vertical: 'middle', horizontal: 'center' } } },
+            { width: 25, style: { alignment: { vertical: 'middle', horizontal: 'left' } } },
+            { width: 35, style: { alignment: { vertical: 'middle', horizontal: 'left' } } },
+            { width: 20, style: { alignment: { vertical: 'middle', horizontal: 'center' } } },
+            { width: 15, style: { alignment: { vertical: 'middle', horizontal: 'center' } } },
+            { width: 20, style: { alignment: { vertical: 'middle', horizontal: 'left' } } },
+            { width: 22, style: { alignment: { vertical: 'middle', horizontal: 'center' } } }
+        ];
+        
+        worksheet.getRow(1).height = 30;
+        worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFF' } };
+        worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'B00000' } };
+        
+        for(let i = 0; i < allRecipients.length; i++){
+            let r = allRecipients[i];
+            let rowNumber = i + 2;
+            
+            worksheet.addRow([
+                r.stt || i + 1,
+                r.hoTen,
+                r.diaChi,
+                r.thuocDien || '',
+                r.khuVuc || '',
+                r.ghiChu || '',
+                ''
+            ]);
+            
+            worksheet.getRow(rowNumber).height = 110;
+            
+            let qrBase64 = await generateBase64Qr(r.qrUrl);
+            
+            let imageId = workbook.addImage({
+                base64: qrBase64,
+                extension: 'png',
+            });
+            
+            worksheet.addImage(imageId, {
+                tl: { col: 6, row: rowNumber - 1, xOffset: 5, yOffset: 5 },
+                ext: { width: 135, height: 135 }
+            });
+        }
+        
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `DANH_SACH_CO_ANH_QR_${getTodayStr()}.xlsx`;
+        link.click();
+        
+        alert(`✅ Đã xuất thành công file Excel chứa hình ảnh QR cho ${allRecipients.length} người!`);
+    }catch(e){ 
+        alert('Lỗi xuất dữ liệu: ' + e.message); 
+    } finally{ 
+        btn.innerHTML = oldText; 
+        btn.disabled = false; 
+    }
+}
+
+// CÁC HÀM PHỤ TRỢ KHÁC
+function exportBasicExcel(){
+    if(allRecipients.length===0){ alert('Chưa có dữ liệu'); return; }
+    let data = allRecipients.map((r,i)=>({
+        'STT': r.stt||i+1, 'HỌ TÊN': r.hoTen, 'ĐỊA CHỈ': r.diaChi,
+        'DIỆN': r.thuocDien||'', 'KHU VỰC': r.khuVuc||'', 'GHI CHÚ': r.ghiChu||'',
+        'TRẠNG THÁI': r.received?'Đã nhận':'Chưa nhận', 'GIỜ NHẬN': r.receivedTime||'---'
+    }));
+    let ws = XLSX.utils.json_to_sheet(data);
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'BaoCao');
+    XLSX.writeFile(wb, `BAO_CAO_${formatDate(new Date())}.xlsx`);
+}
+
+function printAllInvites(){
+    if(allRecipients.length===0){ alert('Chưa có dữ liệu'); return; }
+    let win = window.open('', '_blank');
+    let today = formatDate(new Date());
+    win.document.write(`<!DOCTYPE html><html><head><title>Giấy mời</title><meta charset="UTF-8"><style>
+        body{font-family:Arial;padding:20px;background:#eee;}
+        .invite{background:#fff;border:1px solid #b00000;border-radius:12px;padding:20px;margin-bottom:20px;text-align:center;page-break-after:always;}
+        .qr{display:flex;justify-content:center;margin:15px 0;}
+        @media print{.invite{page-break-after:always;margin:0;border:none;}}
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+    </head><body><div id="invites"></div><script>
+    const data = ${JSON.stringify(allRecipients)};
+    const container = document.getElementById('invites');
+    data.forEach(r => {
+        let div = document.createElement('div'); div.className = 'invite';
+        let qrId = 'qr'+r.id.replace(/[^a-zA-Z0-9]/g,'_');
+        div.innerHTML = '<h2 style="color:#b00000;">🎁 GIẤY MỜI NHẬN QUÀ</h2><h3>Kính mời: '+r.hoTen+'</h3><div class="qr" id="'+qrId+'"></div><p>🏠 '+r.diaChi+'</p>'+(r.thuocDien?'<p>📋 '+r.thuocDien+'</p>':'')+(r.khuVuc?'<p>🗺️ '+r.khuVuc+'</p>':'')+'<p>⏰ Ngày: ${today}</p><hr><p style="font-size:12px;">※ Quét QR để điểm danh ※</p>';
+        container.appendChild(div);
+        new QRCode(document.getElementById(qrId), { text: r.qrUrl, width: 160, height: 160 });
+    });
+    setTimeout(() => window.print(), 600);
+    <\/script></body></html>`);
+    win.document.close();
+}
+
+function printAllQRs(){
+    if(allRecipients.length===0){ alert('Chưa có dữ liệu'); return; }
+    let win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><title>Mã QR</title><style>
+        .grid{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;}
+        .card{border:1px solid #ddd;padding:12px;text-align:center;width:180px;}
+        @media print{.card{page-break-inside:avoid;}}
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+    </head><body><div class="grid" id="grid"></div><script>
+    const data = ${JSON.stringify(allRecipients)};
+    const grid = document.getElementById('grid');
+    data.forEach(r => {
+        let card = document.createElement('div'); card.className = 'card';
+        let qrId = 'qr'+r.id.replace(/[^a-zA-Z0-9]/g,'_');
+        card.innerHTML = '<div id="'+qrId+'"></div><h4>'+r.hoTen+'</h4>';
+        grid.appendChild(card);
+        new QRCode(document.getElementById(qrId), { text: r.qrUrl, width: 130, height: 130 });
+    });
+    setTimeout(() => window.print(), 600);
+    <\/script></body></html>`);
+    win.document.close();
+}
+
+function showQR(id){
+    let r = allRecipients.find(x=>x.id===id);
+    if(!r) return;
+    currentQR = r;
+    let modal = document.getElementById('qrModal');
+    document.getElementById('modalQR').innerHTML = '';
+    new QRCode(document.getElementById('modalQR'), { text: r.qrUrl, width: 200, height: 200 });
+    document.getElementById('modalInfo').innerHTML = `<p><strong>${escapeHtml(r.hoTen)}</strong></p><p>${escapeHtml(r.diaChi)}</p>`;
+    modal.style.display = 'flex';
+}
+
+window.printQR = function(){
+    if(!currentQR) return;
+    let win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><title>QR - ${currentQR.hoTen}</title><style>body{text-align:center;padding:30px;}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script></head><body><div id="qr" style="display:flex;justify-content:center;margin-bottom:15px;"></div><h3>${currentQR.hoTen}</h3><p>${currentQR.diaChi}</p><script>new QRCode(document.getElementById('qr'),{text:'${currentQR.qrUrl}',width:200,height:200}); setTimeout(()=>window.print(),300);<\/script></body></html>`);
+    win.document.close();
+}
+
+async function deleteAll(){
+    if(confirm('XÓA TOÀN BỘ DỮ LIỆU?')){
+        await remove(ref(db, 'recipients'));
+        await remove(ref(db, 'received'));
+        alert('Đã xóa sạch dữ liệu');
+        await loadData();
+    }
+}
+
+async function deleteToday(){
+    if(confirm('Xóa toàn bộ điểm danh của ngày hôm nay?')){
+        let today = getTodayStr();
+        let snap = await get(child(ref(db), 'received'));
+        if(snap.exists()){
+            for(let uid in snap.val()){
+                if(snap.val()[uid][today]) await remove(ref(db, 'received/'+uid+'/'+today));
+            }
+        }
+        alert('Đã xóa dữ liệu hôm nay');
+        await loadData();
+    }
+}
+
+async function renderAdmin(){
+    document.getElementById('adminPanel').innerHTML = `
+        <div class="card"><h2>📊 THỐNG KÊ HÔM NAY</h2><div class="dashboard">
+            <div class="box"><h3 id="total">0</h3><p>Tổng cơ sở dữ liệu</p></div>
+            <div class="box" style="background:#2e7d32;"><h3 id="received">0</h3><p>Đã nhận quà</p></div>
+            <div class="box" style="background:#795548;"><h3 id="notReceived">0</h3><p>Chưa nhận quà</p></div>
+            <div class="box" style="background:#009688;"><h3 id="rate">0</h3><p>Tỷ lệ hoàn thành (%)</p></div>
+        </div></div>
+        
+        <div class="card"><h2>📂 THAO TÁC DỮ LIỆU</h2>
+            <div class="btn-row">
+                <input type="file" id="excelFile" accept=".xlsx,.xls" style="flex:2;">
+                <button id="importBtn" class="btn-blue">📤 Import File</button>
+                <button id="sampleBtn" class="btn-green">📥 File Excel Mẫu</button>
+            </div>
+            <div class="btn-row">
+                <button id="exportBasicBtn" class="btn-green">📥 Xuất Excel Báo Cáo</button>
+                <button id="exportQrBtn" class="btn-purple">🖼️ Xuất Excel Có Ảnh QR</button>
+                <button id="printInvitesBtn" class="btn-orange">🖨️ In Giấy Mời Hàng Loạt</button>
+                <button id="printAllQrBtn" class="btn-blue">🖨️ In Nhãn Mã QR</button>
+            </div>
+            <div class="btn-row">
+                <button id="deleteTodayBtn" class="btn-orange">🗑️ Xóa điểm danh hôm nay</button>
+                <button id="deleteAllBtn" style="background:#c62828; color:#fff;">⚠️ Xóa toàn bộ hệ thống</button>
+            </div>
+        </div>
+        
+        <div class="card"><h2>📋 DANH SÁCH CHI TIẾT</h2>
+            <div class="search-box">
+                <input type="text" id="search" placeholder="🔍 Gõ tên hoặc địa chỉ để tìm kiếm nhanh...">
+                <select id="statusFilter"><option value="all">Tất cả trạng thái</option><option value="received">Đã nhận</option><option value="not">Chưa nhận</option></select>
+                <select id="areaFilter"><option value="all">Tất cả khu vực</option></select>
+            </div>
+            <div class="table-container"><table><thead><tr><th>STT</th><th>HỌ TÊN</th><th>ĐỊA CHỈ</th><th>DIỆN</th><th>KHU VỰC</th><th>TRẠNG THÁI</th><th>XEM QR</th></tr></thead><tbody id="tableBody"></tbody></table></div>
+        </div>
+    `;
+    
+    document.getElementById('importBtn').onclick = () => importExcel();
+    document.getElementById('sampleBtn').onclick = downloadSample;
+    document.getElementById('exportBasicBtn').onclick = () => exportBasicExcel();
+    document.getElementById('exportQrBtn').onclick = () => exportExcelWithQR();
+    document.getElementById('printInvitesBtn').onclick = () => printAllInvites();
+    document.getElementById('printAllQrBtn').onclick = () => printAllQRs();
+    document.getElementById('deleteTodayBtn').onclick = () => deleteToday();
+    document.getElementById('deleteAllBtn').onclick = () => deleteAll();
+    document.getElementById('search').oninput = () => filterTable();
+    document.getElementById('statusFilter').onchange = () => filterTable();
+    document.getElementById('areaFilter').onchange = () => filterTable();
+    
+    await loadData();
+}
 
 async function importExcel(){
-
-    const file =
-    document.getElementById('excelFile').files[0];
-
-    if(!file){
-
-        alert("Chọn file Excel");
-
-        return;
-    }
-
-    const reader = new FileReader();
-
+    let file = document.getElementById('excelFile').files[0];
+    if(!file){ alert('Vui lòng chọn tệp tin Excel!'); return; }
+    let reader = new FileReader();
     reader.onload = async function(e){
-
-        const data = new Uint8Array(e.target.result);
-
-        const workbook =
-        XLSX.read(data,{type:'array'});
-
-        const sheet =
-        workbook.Sheets[workbook.SheetNames[0]];
-
-        const json =
-        XLSX.utils.sheet_to_json(sheet);
-
-        let counter = 0;
-
+        let wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        let sheet = wb.Sheets[wb.SheetNames[0]];
+        let json = XLSX.utils.sheet_to_json(sheet);
+        let success=0;
         for(let item of json){
-
-            counter++;
-
-            const values = Object.values(item);
-
-            const stt = values[0] || '';
-
-            const fullname = values[1] || '';
-
-            const address = values[2] || '';
-
-            const area = values[3] || '';
-
-            const id =
-            'QR' + Date.now() + counter;
-
-            const token = randomToken();
-
-            const verifyURL =
-            window.location.origin +
-            window.location.pathname +
-            '?id=' + id +
-            '&token=' + token;
-
-            await db.ref('recipients/' + id).set({
-
-                stt: stt,
-
-                hoTen: fullname,
-
-                diaChi: address,
-
-                khuVuc: area,
-
-                token: token,
-
-                qr: verifyURL,
-
-                received: false,
-
-                scan: 0,
-
-                createdAt: new Date().toISOString()
-
+            let keys = Object.keys(item);
+            let hoTen = '', diaChi = '', thuocDien='', khuVuc='', ghiChu='', stt='';
+            for(let k of keys){
+                let low = k.toLowerCase().trim();
+                if(low.includes('tên')||low.includes('họ')) hoTen = item[k];
+                if(low.includes('địa chỉ')||low.includes('địa')) diaChi = item[k];
+                if(low.includes('diện')) thuocDien = item[k];
+                if(low.includes('khu vực')||low.includes('khu')) khuVuc = item[k];
+                if(low.includes('ghi chú')) ghiChu = item[k];
+                if(low.includes('stt')) stt = item[k];
+            }
+            if(!hoTen || !diaChi) continue;
+            let id = randomId();
+            let qrUrl = getBaseUrl() + '?id=' + id;
+            await set(ref(db, 'recipients/'+id), {
+                id, stt: stt||'', hoTen, diaChi, thuocDien: thuocDien||'', khuVuc: khuVuc||'', ghiChu: ghiChu||'',
+                qrUrl, received: false, createdAt: new Date().toISOString()
             });
-
+            success++;
         }
-
-        alert("IMPORT THÀNH CÔNG");
-
-        loadData();
-
+        alert(`✅ Import thành công ${success} người vào hệ thống!`);
+        await loadData();
     };
-
     reader.readAsArrayBuffer(file);
-
 }
 
-// ==========================
-// LOAD DATA
-// ==========================
+function downloadSample(){
+    let data = [{STT:1,"HỌ VÀ TÊN":"Nguyễn Văn A","ĐỊA CHỈ":"Số 1 Đường Lê Lợi","THUỘC DIỆN":"Hộ nghèo","KHU VỰC":"Tổ 1","GHI CHÚ":""}];
+    let ws = XLSX.utils.json_to_sheet(data);
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Mau');
+    XLSX.writeFile(wb, 'Mau_Import_Diem_Danh.xlsx');
+}
 
 async function loadData(){
-
-    const snapshot =
-    await db.ref('recipients').once('value');
-
-    const tbody =
-    document.getElementById('tableData');
-
-    tbody.innerHTML = '';
-
-    let total = 0;
-
-    let daNhan = 0;
-
-    let tongQuet = 0;
-
-    if(snapshot.exists()){
-
-        const data = snapshot.val();
-
-        for(let id in data){
-
+    let snap = await get(child(ref(db), 'recipients'));
+    let today = getTodayStr();
+    let recSnap = await get(child(ref(db), 'received'));
+    let receivedToday = {};
+    if(recSnap.exists()){
+        for(let uid in recSnap.val()){
+            if(recSnap.val()[uid][today]) receivedToday[uid] = recSnap.val()[uid][today];
+        }
+    }
+    allRecipients = [];
+    let total=0, recCount=0, areas=new Set();
+    if(snap.exists()){
+        for(let id in snap.val()){
+            let r = snap.val()[id];
             total++;
-
-            tongQuet += data[id].scan || 0;
-
-            if(data[id].received){
-
-                daNhan++;
-            }
-
-            tbody.innerHTML += `
-
-            <tr>
-
-                <td>${data[id].stt}</td>
-
-                <td>${data[id].hoTen}</td>
-
-                <td>${data[id].diaChi}</td>
-
-                <td>${data[id].khuVuc}</td>
-
-                <td>
-
-                    ${
-                        data[id].received
-                        ?
-                        '<span style="color:green;font-weight:bold;">ĐÃ NHẬN</span>'
-                        :
-                        '<span style="color:red;font-weight:bold;">CHƯA NHẬN</span>'
-                    }
-
-                </td>
-
-                <td>
-
-                    <button onclick="showQR('${id}')">
-
-                        XEM QR
-
-                    </button>
-
-                </td>
-
-            </tr>
-
-            `;
+            let isRec = receivedToday[id]?true:false;
+            if(isRec) recCount++;
+            if(r.khuVuc) areas.add(r.khuVuc);
+            allRecipients.push({
+                id, stt: r.stt, hoTen: r.hoTen, diaChi: r.diaChi,
+                thuocDien: r.thuocDien||'', khuVuc: r.khuVuc||'', ghiChu: r.ghiChu||'',
+                received: isRec, receivedTime: receivedToday[id]?.time||null, qrUrl: r.qrUrl
+            });
         }
     }
-
-    document.getElementById('tongDanhsach').innerText =
-    total;
-
-    document.getElementById('daNhan').innerText =
-    daNhan;
-
-    document.getElementById('chuaNhan').innerText =
-    total - daNhan;
-
-    document.getElementById('tongQuet').innerText =
-    tongQuet;
+    let areaSelect = document.getElementById('areaFilter');
+    if(areaSelect){
+        let val = areaSelect.value;
+        areaSelect.innerHTML = '<option value="all">Tất cả KV</option>';
+        [...areas].sort().forEach(a=>{ if(a) areaSelect.innerHTML += `<option value="${a}">${a}</option>`; });
+        if(val && areaSelect.querySelector(`option[value="${val}"]`)) areaSelect.value=val;
+    }
+    document.getElementById('total').innerText = total;
+    document.getElementById('received').innerText = recCount;
+    document.getElementById('notReceived').innerText = total-recCount;
+    document.getElementById('rate').innerText = total>0?Math.round(recCount/total*100):0;
+    filterTable();
 }
 
-// ==========================
-// HIỂN THỊ QR
-// ==========================
-
-async function showQR(id){
-
-    const snapshot =
-    await db.ref('recipients/' + id).once('value');
-
-    const data = snapshot.val();
-
-    let div = document.createElement('div');
-
-    div.style.position='fixed';
-
-    div.style.left='0';
-
-    div.style.top='0';
-
-    div.style.width='100%';
-
-    div.style.height='100%';
-
-    div.style.background='rgba(0,0,0,0.7)';
-
-    div.style.display='flex';
-
-    div.style.justifyContent='center';
-
-    div.style.alignItems='center';
-
-    div.innerHTML = `
-
-        <div style="
-            background:white;
-            padding:30px;
-            border-radius:10px;
-            text-align:center;
-        ">
-
-            <h3>${data.hoTen}</h3>
-
-            <div id="popupQR"></div>
-
-            <br>
-
-            <button onclick="this.parentElement.parentElement.remove()">
-
-                ĐÓNG
-
-            </button>
-
-        </div>
-
-    `;
-
-    document.body.appendChild(div);
-
-    new QRCode(
-        document.getElementById('popupQR'),
-        {
-            text:data.qr,
-            width:250,
-            height:250
-        }
-    );
-}
-
-// ==========================
-// CAMERA QR
-// ==========================
-
-let qrScanner = null;
-
-function startScanner(){
-
-    qrScanner = new Html5Qrcode("reader");
-
-    Html5Qrcode.getCameras().then(devices => {
-
-        if(devices && devices.length){
-
-            qrScanner.start(
-
-                devices[0].id,
-
-                {
-                    fps:10,
-                    qrbox:250
-                },
-
-                (decodedText) => {
-
-                    qrScanner.stop();
-
-                    verifyQR(decodedText);
-
-                }
-
-            );
-
-        }
-
+function filterTable(){
+    let search = document.getElementById('search').value.toLowerCase();
+    let status = document.getElementById('statusFilter').value;
+    let area = document.getElementById('areaFilter').value;
+    let filtered = allRecipients.filter(r => {
+        let match = r.hoTen.toLowerCase().includes(search) || r.diaChi.toLowerCase().includes(search);
+        let matchStatus = status==='all' || (status==='received' && r.received) || (status==='not' && !r.received);
+        let matchArea = area==='all' || r.khuVuc===area;
+        return match && matchStatus && matchArea;
     });
-
+    let tbody = document.getElementById('tableBody');
+    if(filtered.length===0){ tbody.innerHTML='<tr><td colspan="7">📭 Không tìm thấy kết quả phù hợp</td></tr>'; return; }
+    tbody.innerHTML = '';
+    filtered.forEach((r,i)=>{
+        let statusHtml = r.received ? `<span class="badge-success">✅ Đã nhận<br>${r.receivedTime}</span>` : `<span class="badge-warning">⏳ Chưa nhận</span>`;
+        tbody.innerHTML += `<tr>
+            <td>${r.stt||i+1}</td>
+            <td style="text-align:left; font-weight:500;">${escapeHtml(r.hoTen)}</td>
+            <td style="text-align:left">${escapeHtml(r.diaChi)}</td>
+            <td>${escapeHtml(r.thuocDien)||'---'}</td>
+            <td>${escapeHtml(r.khuVuc)||'---'}</td>
+            <td>${statusHtml}</td>
+            <td><button class="view-qr" data-id="${r.id}" style="background:#2196f3;padding:4px 10px;">🔲 QR</button></td>
+        </tr>`;
+    });
+    document.querySelectorAll('.view-qr').forEach(btn=>{ btn.onclick=()=>showQR(btn.dataset.id); });
 }
 
-// ==========================
-// VERIFY QR
-// ==========================
-
-async function verifyQR(url){
-
-    try{
-
-        const parsed = new URL(url);
-
-        const id =
-        parsed.searchParams.get("id");
-
-        const token =
-        parsed.searchParams.get("token");
-
-        const snapshot =
-        await db.ref('recipients/' + id).once('value');
-
-        const div =
-        document.getElementById('scanResult');
-
-        if(snapshot.exists()){
-
-            const data = snapshot.val();
-
-            if(data.token === token){
-
-                let scan = (data.scan || 0) + 1;
-
-                await db.ref('recipients/' + id).update({
-
-                    scan: scan
-
-                });
-
-                // ĐÃ NHẬN
-                if(data.received){
-
-                    div.innerHTML = `
-
-                    <div class="verify-card">
-
-                        <h3 class="error">
-
-                            ❌ ĐÃ NHẬN TRƯỚC ĐÓ
-
-                        </h3>
-
-                        <p>
-
-                            ${data.hoTen}
-
-                        </p>
-
-                    </div>
-
-                    `;
-
-                    restartScanner();
-
-                    return;
-                }
-
-                // XÁC NHẬN
-                div.innerHTML = `
-
-                <div class="verify-card">
-
-                    <h3 class="success">
-
-                        ✅ QR HỢP LỆ
-
-                    </h3>
-
-                    <p>
-
-                        <b>${data.hoTen}</b>
-
-                    </p>
-
-                    <p>
-
-                        ${data.diaChi}
-
-                    </p>
-
-                    <p>
-
-                        Khu vực: ${data.khuVuc}
-
-                    </p>
-
-                    <br>
-
-                    <button id="confirmBtn">
-
-                        XÁC NHẬN NHẬN QUÀ
-
-                    </button>
-
-                </div>
-
-                `;
-
-                document
-                .getElementById('confirmBtn')
-                .onclick = async () => {
-
-                    let now = new Date();
-
-                    await db.ref(
-                        'recipients/' + id
-                    ).update({
-
-                        received:true,
-
-                        receivedTime:
-                        now.toISOString()
-
-                    });
-
-                    if(navigator.vibrate){
-
-                        navigator.vibrate(300);
-                    }
-
-                    let audio = new Audio(
-                    'https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg'
-                    );
-
-                    audio.play();
-
-                    div.innerHTML = `
-
-                    <div class="verify-card">
-
-                        <h3 class="success">
-
-                            ✅ NHẬN QUÀ THÀNH CÔNG
-
-                        </h3>
-
-                        <p>
-
-                            ${data.hoTen}
-
-                        </p>
-
-                        <br>
-
-                        <p>
-
-                            Đang quay lại quét tiếp...
-
-                        </p>
-
-                    </div>
-
-                    `;
-
-                    loadData();
-
-                    setTimeout(()=>{
-
-                        restartScanner();
-
-                    },2000);
-
-                };
-
-            }else{
-
-                div.innerHTML = `
-
-                <div class="verify-card">
-
-                    <h3 class="error">
-
-                        ❌ QR KHÔNG HỢP LỆ
-
-                    </h3>
-
-                </div>
-
-                `;
-
-                restartScanner();
-
-            }
-
-        }else{
-
-            div.innerHTML = `
-
-            <div class="verify-card">
-
-                <h3 class="error">
-
-                    ❌ KHÔNG TÌM THẤY
-
-                </h3>
-
-            </div>
-
-            `;
-
-            restartScanner();
-        }
-
-    }catch(err){
-
-        console.log(err);
-
-        restartScanner();
+function login(){
+    let pwd = document.getElementById('adminPassword').value;
+    if(pwd === ADMIN_PASSWORD){
+        // Lưu lại cấu hình đăng nhập vĩnh viễn trên thiết bị này
+        localStorage.setItem('isAdminLoggedIn', 'true');
+        showAdminInterface();
+    }else{
+        document.getElementById('loginError').style.display='block';
     }
-
 }
 
-// ==========================
-// QUAY LẠI QUÉT
-// ==========================
-
-function restartScanner(){
-
-    setTimeout(()=>{
-
-        document.getElementById('scanResult').innerHTML='';
-
-        startScanner();
-
-    },2000);
-
+function showAdminInterface() {
+    document.getElementById('loginPanel').style.display='none';
+    document.getElementById('adminPanel').style.display='block';
+    document.querySelectorAll('.admin-content').forEach(el=>el.style.display='block');
+    renderAdmin();
 }
 
-// ==========================
-// START
-// ==========================
+// KHỞI ĐỘNG HỆ THỐNG
+async function initSystem() {
+    let verifying = await checkVerification();
+    if(!verifying){
+        // Kiểm tra xem trước đó cán bộ đã đăng nhập thành công hay chưa
+        if(localStorage.getItem('isAdminLoggedIn') === 'true') {
+            showAdminInterface();
+        } else {
+            document.getElementById('loginBtn').onclick = login;
+            document.getElementById('adminPassword').onkeypress = e => { if(e.key==='Enter') login(); };
+        }
+    }
+}
 
-loadData();
-
-startScanner();
-
+// Chạy khởi tạo hệ thống
+initSystem();
 </script>
-
 </body>
 </html>
