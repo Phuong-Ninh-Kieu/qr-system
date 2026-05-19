@@ -278,7 +278,7 @@ async function exportExcelWithQR(){
 function exportBasicExcel(){
     if(allRecipients.length===0){ alert('Chưa có dữ liệu'); return; }
     let data = allRecipients.map((r,i)=>({
-        'STT': r.stt||i+1, 'HỌ TÊN': r.hoTen, 'ĐỊA CHỈ': r.diaChi,
+        'STT': r.stt||i+1, 'HỌ VÀ TÊN': r.hoTen, 'ĐỊA CHỈ': r.diaChi,
         'DIỆN': r.thuocDien||'', 'KHU VỰC': r.khuVuc||'', 'GHI CHÚ': r.ghiChu||'',
         'TRẠNG THÁI': r.received?'Đã nhận':'Chưa nhận', 'GIỜ NHẬN': r.receivedTime||'---'
     }));
@@ -413,7 +413,7 @@ async function renderAdmin(){
                 <select id="statusFilter"><option value="all">Tất cả trạng thái</option><option value="received">Đã nhận</option><option value="not">Chưa nhận</option></select>
                 <select id="areaFilter"><option value="all">Tất cả khu vực</option></select>
             </div>
-            <div class="table-container"><table><thead><tr><th>STT</th><th>HỌ TÊN</th><th>ĐỊA CHỈ</th><th>DIỆN</th><th>KHU VỰC</th><th>TRẠNG THÁI</th><th>XEM QR</th></tr></thead><tbody id="tableBody"></tbody></table></div>
+            <div class="table-container"><table><thead><tr><th>STT</th><th>HỌ VÀ TÊN</th><th>ĐỊA CHỈ</th><th>DIỆN</th><th>KHU VỰC</th><th>TRẠNG THÁI</th><th>XEM QR</th></tr></thead><tbody id="tableBody"></tbody></table></div>
         </div>
     `;
     
