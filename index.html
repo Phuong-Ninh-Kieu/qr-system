@@ -40,6 +40,8 @@ td{border:1px solid #ddd;padding:8px;text-align:center;}
 .verify-header{background:#b00000;color:white;padding:20px;text-align:center;}
 .verify-content{padding:25px;text-align:center;}
 .required{color:#c62828;font-size:11px;margin-left:5px;}
+.error-message{background:#ffebee;color:#c62828;padding:10px;border-radius:8px;margin-top:10px;display:none;}
+.success-message{background:#e8f5e9;color:#2e7d32;padding:10px;border-radius:8px;margin-top:10px;display:none;}
 </style>
 </head>
 <body>
@@ -138,6 +140,18 @@ async function processReceiveGift(recipientId){
     }
 }
 
+// Hàm lấy giá trị từ object không phân biệt hoa thường và dấu
+function getValueByKeys(obj, possibleKeys) {
+    for(let key of possibleKeys) {
+        // Tìm key không phân biệt hoa thường
+        let foundKey = Object.keys(obj).find(k => k.toLowerCase() === key.toLowerCase());
+        if(foundKey && obj[foundKey]) {
+            return obj[foundKey].toString().trim();
+        }
+    }
+    return '';
+}
+
 // ADMIN
 async function renderAdmin(){
     let baseUrl = getBaseUrl();
@@ -158,6 +172,8 @@ async function renderAdmin(){
             <input type="file" id="excelFile" accept=".xlsx,.xls">
             <button id="importBtn">📤 IMPORT</button>
             <button id="sampleExcelBtn" class="btn-blue">📥 Tải file mẫu</button>
+            <div id="importMessage" class="error-message"></div>
+            <div id="importSuccess" class="success-message"></div>
         </div>
         
         <div class="card"><h2>📋 DANH SÁCH</h2>
@@ -174,22 +190,16 @@ async function renderAdmin(){
                 <button id="printAllQrBtn" class="btn-purple">🖨️ In QR tất cả</button>
                 <button id="exportExcelBtn" class="btn-green">📥 Xuất Excel</button>
             </div>
-            <div class="table-container">\n<td>
-                <thead>
-                    <tr>
-                        <th>STT</th>
-                        <th>HỌ VÀ TÊN</th>
-                        <th>ĐỊA CHỈ</th>
-                        <th>THUỘC DIỆN</th>
-                        <th>KHU VỰC</th>
-                        <th>GHI CHÚ</th>
-                        <th>TRẠNG THÁI</th>
-                        <th>GIỜ NHẬN</th>
-                        <th>MÃ QR</th>
-                    </tr>
-                </thead>
-                <tbody id="tableData"></tbody>
-            </table></div>
+            <div id="tableContainer" class="table-container">
+                <table style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>STT</th><th>HỌ VÀ TÊN</th><th>ĐỊA CHỈ</th><th>THUỘC DIỆN</th><th>KHU VỰC</th><th>GHI CHÚ</th><th>TRẠNG THÁI</th><th>GIỜ NHẬN</th><th>MÃ QR</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableData"></tbody>
+                </table>
+            </div>
         </div>
         
         <div class="card"><h2>🖨️ IN HÀNG LOẠT MÃ QR</h2>
@@ -225,53 +235,99 @@ function downloadSampleExcel(){
 
 async function importExcel(baseUrl){
     let file = document.getElementById('excelFile').files[0];
-    if(!file){ alert('Chọn file Excel'); return; }
+    let msgDiv = document.getElementById('importMessage');
+    let successDiv = document.getElementById('importSuccess');
+    
+    msgDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+    
+    if(!file){ 
+        msgDiv.innerHTML = '❌ Chọn file Excel';
+        msgDiv.style.display = 'block';
+        return; 
+    }
+    
     let reader = new FileReader();
     reader.onload = async function(e){
-        let wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-        let sheet = wb.Sheets[wb.SheetNames[0]];
-        let json = XLSX.utils.sheet_to_json(sheet);
-        
-        let successCount = 0;
-        let errorCount = 0;
-        
-        for(let item of json){
-            // Lấy dữ liệu từ các cột (hỗ trợ cả tiếng Việt có dấu)
-            let stt = item['STT'] || item['Stt'] || item['stt'] || '';
-            let hoTen = item['HỌ VÀ TÊN'] || item['HỌ TÊN'] || item['Họ và tên'] || item['hoten'] || '';
-            let diaChi = item['ĐỊA CHỈ'] || item['Địa chỉ'] || item['diachi'] || '';
-            let thuocDien = item['THUỘC DIỆN'] || item['Thuộc diện'] || item['thuocdien'] || '';
-            let khuVuc = item['KHU VỰC'] || item['Khu vực'] || item['khuvuc'] || '';
-            let ghiChu = item['GHI CHÚ'] || item['Ghi chú'] || item['ghichu'] || '';
+        try {
+            let wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+            let sheet = wb.Sheets[wb.SheetNames[0]];
+            let json = XLSX.utils.sheet_to_json(sheet);
             
-            // Kiểm tra cột bắt buộc
-            if(!hoTen || !diaChi){
-                errorCount++;
-                console.log(`Thiếu dữ liệu bắt buộc: STT=${stt}, Họ tên=${hoTen}, Địa chỉ=${diaChi}`);
-                continue;
+            if(json.length === 0){
+                msgDiv.innerHTML = '❌ File Excel không có dữ liệu';
+                msgDiv.style.display = 'block';
+                return;
             }
             
-            let recipientId = randomId();
-            let qrUrl = baseUrl + '?id=' + recipientId;
+            console.log('Dữ liệu đọc được từ Excel:', json);
+            console.log('Các cột trong file:', Object.keys(json[0]));
             
-            await set(ref(db, 'recipients/' + recipientId), {
-                id: recipientId,
-                stt: stt || successCount + 1,
-                hoTen: hoTen,
-                diaChi: diaChi,
-                thuocDien: thuocDien || '',
-                khuVuc: khuVuc || '',
-                ghiChu: ghiChu || '',
-                qrUrl: qrUrl,
-                totalReceived: 0,
-                createdAt: new Date().toISOString()
-            });
-            successCount++;
-            await new Promise(r => setTimeout(r, 20));
+            let successCount = 0;
+            let errorCount = 0;
+            let errors = [];
+            
+            for(let item of json){
+                // Lấy giá trị từ các cột (linh hoạt nhiều cách viết)
+                let stt = getValueByKeys(item, ['STT', 'Stt', 'stt', 'Số thứ tự', 'Số TT']);
+                let hoTen = getValueByKeys(item, ['HỌ VÀ TÊN', 'HỌ TÊN', 'Họ và tên', 'Hoten', 'hoten', 'Tên', 'Họ tên']);
+                let diaChi = getValueByKeys(item, ['ĐỊA CHỈ', 'Địa chỉ', 'Dia chi', 'diachi', 'Địa chỉ nhà']);
+                let thuocDien = getValueByKeys(item, ['THUỘC DIỆN', 'Thuộc diện', 'thuocdien', 'Diện', 'Đối tượng']);
+                let khuVuc = getValueByKeys(item, ['KHU VỰC', 'Khu vực', 'khuvuc', 'Tổ', 'Thôn', 'Xóm']);
+                let ghiChu = getValueByKeys(item, ['GHI CHÚ', 'Ghi chú', 'ghichu', 'Ghi chu']);
+                
+                // Kiểm tra cột bắt buộc
+                if(!hoTen){
+                    errorCount++;
+                    errors.push(`Thiếu HỌ VÀ TÊN ở dòng: ${JSON.stringify(item)}`);
+                    continue;
+                }
+                if(!diaChi){
+                    errorCount++;
+                    errors.push(`Thiếu ĐỊA CHỈ cho: ${hoTen}`);
+                    continue;
+                }
+                
+                let recipientId = randomId();
+                let qrUrl = baseUrl + '?id=' + recipientId;
+                
+                await set(ref(db, 'recipients/' + recipientId), {
+                    id: recipientId,
+                    stt: stt || successCount + 1,
+                    hoTen: hoTen,
+                    diaChi: diaChi,
+                    thuocDien: thuocDien || '',
+                    khuVuc: khuVuc || '',
+                    ghiChu: ghiChu || '',
+                    qrUrl: qrUrl,
+                    totalReceived: 0,
+                    createdAt: new Date().toISOString()
+                });
+                successCount++;
+                await new Promise(r => setTimeout(r, 20));
+            }
+            
+            let msg = `✅ Import thành công: ${successCount} người`;
+            if(errorCount > 0){
+                msg += `\n⚠️ Bỏ qua: ${errorCount} người (thiếu tên hoặc địa chỉ)`;
+                console.log('Lỗi chi tiết:', errors);
+            }
+            successDiv.innerHTML = msg;
+            successDiv.style.display = 'block';
+            
+            if(successCount > 0){
+                await loadData();
+            }
+            
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 5000);
+            
+        } catch(err) {
+            console.error('Lỗi import:', err);
+            msgDiv.innerHTML = '❌ Lỗi khi đọc file: ' + err.message;
+            msgDiv.style.display = 'block';
         }
-        
-        alert(`✅ Import thành công: ${successCount} người\n⚠️ Bỏ qua: ${errorCount} người (thiếu tên hoặc địa chỉ)`);
-        await loadData();
     };
     reader.readAsArrayBuffer(file);
 }
@@ -324,7 +380,7 @@ async function loadData(){
         let currentValue = areaSelect.value;
         areaSelect.innerHTML = '<option value="all">🗺️ Tất cả khu vực</option>';
         Array.from(areas).sort().forEach(area => {
-            areaSelect.innerHTML += `<option value="${escapeHtml(area)}">${escapeHtml(area)}</option>`;
+            if(area) areaSelect.innerHTML += `<option value="${escapeHtml(area)}">${escapeHtml(area)}</option>`;
         });
         if(currentValue && areaSelect.querySelector(`option[value="${currentValue}"]`)) {
             areaSelect.value = currentValue;
@@ -348,14 +404,19 @@ function filterTable(){
     let tbody = document.getElementById('tableData');
     
     let filtered = allRecipients.filter(r => {
-        let matchSearch = r.hoTen.toLowerCase().includes(searchText) || 
-                          r.diaChi.toLowerCase().includes(searchText) ||
+        let matchSearch = (r.hoTen && r.hoTen.toLowerCase().includes(searchText)) || 
+                          (r.diaChi && r.diaChi.toLowerCase().includes(searchText)) ||
                           (r.thuocDien && r.thuocDien.toLowerCase().includes(searchText)) ||
                           (r.khuVuc && r.khuVuc.toLowerCase().includes(searchText));
         let matchStatus = status === 'all' || (status === 'received' && r.received) || (status === 'notreceived' && !r.received);
         let matchArea = filterArea === 'all' || r.khuVuc === filterArea;
         return matchSearch && matchStatus && matchArea;
     });
+    
+    if(filtered.length === 0){
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;">📭 Không có dữ liệu. Vui lòng import danh sách từ Excel.</td></tr>';
+        return;
+    }
     
     tbody.innerHTML = '';
     filtered.forEach((r, idx) => {
@@ -405,12 +466,12 @@ function renderQrPrintArea(){
     let area = document.getElementById('qrPrintArea');
     if(!area) return;
     
-    let preview = allRecipients.slice(0, 12);
-    if(preview.length === 0){
-        area.innerHTML = '<div class="badge-info" style="padding:10px;text-align:center;">📋 Danh sách mã QR sẽ hiển thị tại đây để in hàng loạt</div>';
+    if(allRecipients.length === 0){
+        area.innerHTML = '<div class="badge-info" style="padding:10px;text-align:center;">📋 Chưa có dữ liệu. Vui lòng import danh sách trước.</div>';
         return;
     }
     
+    let preview = allRecipients.slice(0, 12);
     area.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:15px;justify-content:center;">';
     preview.forEach(recipient => {
         area.innerHTML += `
@@ -431,6 +492,11 @@ function renderQrPrintArea(){
 }
 
 function printAllQrCodes(){
+    if(allRecipients.length === 0){
+        alert('Chưa có dữ liệu. Vui lòng import danh sách trước.');
+        return;
+    }
+    
     let printWindow = window.open('', '_blank');
     printWindow.document.write(`
         <html>
@@ -477,6 +543,11 @@ function printAllQrCodes(){
 }
 
 function exportReportExcel(){
+    if(allRecipients.length === 0){
+        alert('Chưa có dữ liệu. Vui lòng import danh sách trước.');
+        return;
+    }
+    
     let exportData = allRecipients.map((r, i) => ({
         'STT': r.stt || i+1,
         'HỌ VÀ TÊN': r.hoTen,
