@@ -15,18 +15,19 @@
 body{background:#eef2f7;padding-bottom:30px;}
 .header{background:#b00000;color:#fff;padding:16px;text-align:center;border-bottom:4px solid #ffcc00;}
 .header h1{font-size:22px;margin-bottom:5px;}
-.container{width:95%;max-width:600px;margin:15px auto;}
+.container{width:95%;max-width:700px;margin:15px auto;}
 .card{background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
 .card h2{color:#b00000;font-size:18px;margin-bottom:15px;border-left:4px solid #b00000;padding-left:12px;}
 .dashboard{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
 .box{background:#b00000;color:#fff;padding:15px;border-radius:12px;text-align:center;}
 .box h3{font-size:28px;margin-bottom:5px;}
 .box p{font-size:12px;}
-button{background:#b00000;color:#fff;padding:12px 20px;border:none;border-radius:10px;font-size:14px;font-weight:bold;margin:5px;cursor:pointer;}
+button{background:#b00000;color:#fff;padding:10px 16px;border:none;border-radius:10px;font-size:13px;font-weight:bold;margin:5px;cursor:pointer;}
 button:hover{opacity:0.9;}
 .btn-green{background:#2e7d32;}
 .btn-orange{background:#ff9800;}
 .btn-blue{background:#2196f3;}
+.btn-manual{background:#9c27b0;}
 input{padding:12px;border:1px solid #ccc;border-radius:10px;margin:5px;}
 .table-container{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
@@ -44,8 +45,10 @@ td{border:1px solid #ddd;padding:8px;text-align:center;}
 .badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:bold;}
 .badge-success{background:#e8f5e9;color:#2e7d32;}
 .badge-warning{background:#ffebee;color:#c62828;}
-.export-buttons{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;}
-.export-buttons button{flex:1;min-width:120px;}
+.export-buttons{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;}
+.export-buttons button{flex:1;min-width:100px;}
+.action-buttons{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;}
+.action-buttons button{font-size:11px;padding:6px 10px;margin:2px;}
 </style>
 </head>
 <body>
@@ -87,7 +90,7 @@ function formatDate(d){return d.toLocaleDateString('vi-VN');}
 function getTodayStr(){return new Date().toISOString().split('T')[0];}
 function getBaseUrl(){return window.location.href.split('?')[0];}
 
-// Xác thực khi quét QR
+// Xác thực khi quét QR từ người dân
 async function checkVerification(){
     let id = new URLSearchParams(location.search).get('id');
     let token = new URLSearchParams(location.search).get('token');
@@ -153,24 +156,28 @@ async function renderAdmin(){
             <input type="file" id="excelFile" accept=".xlsx,.xls">
             <button id="importBtn">📤 IMPORT</button>
         </div>
-        <div class="card"><h2>📷 QUÉT QR</h2>
+        <div class="card"><h2>📷 QUÉT QR (Camera sau)</h2>
             <div id="reader"></div>
             <div id="scanResult" style="margin-top:12px;"></div>
         </div>
         <div class="card"><h2>📋 DANH SÁCH ĐIỂM DANH HÔM NAY</h2>
             <div class="export-buttons">
-                <button id="exportCheckedBtn" class="btn-green">📥 Xuất Đã điểm danh</button>
-                <button id="exportUncheckedBtn" class="btn-orange">📥 Xuất Chưa điểm danh</button>
-                <button id="exportAllBtn" class="btn-blue">📥 Xuất Tất cả</button>
+                <button id="exportCheckedBtn" class="btn-green">📥 Đã điểm danh</button>
+                <button id="exportUncheckedBtn" class="btn-orange">📥 Chưa điểm danh</button>
+                <button id="exportAllBtn" class="btn-blue">📥 Tất cả</button>
             </div>
             <div class="table-container" style="margin-top:15px;">
                 <table>
-                    <thead><tr><th>STT</th><th>HỌ TÊN</th><th>ĐỊA CHỈ</th><th>KHU VỰC</th><th>TRẠNG THÁI</th><th>GIỜ CHECK-IN</th><th>QR</th><th>PDF</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>STT</th><th>HỌ TÊN</th><th>ĐỊA CHỈ</th><th>KHU VỰC</th><th>TRẠNG THÁI</th><th>GIỜ</th><th>THAO TÁC</th>
+                        </tr>
+                    </thead>
                     <tbody id="tableData"></tbody>
                 </table>
             </div>
         </div>
-        <div class="card"><h2>🖨️ XUẤT THẺ</h2><div id="cardArea"></div></div>
+        <div class="card"><h2>🖨️ XUẤT THẺ QR</h2><div id="cardArea"></div></div>
     `;
     document.getElementById('importBtn').onclick=()=>importExcel(baseUrl);
     document.getElementById('exportCheckedBtn').onclick=()=>exportExcel('checked');
@@ -252,22 +259,58 @@ async function loadData(){
                 area: data[id].area,
                 status: isChecked?'Đã điểm danh':'Chưa điểm danh',
                 checkinTime: checkinTime,
-                userId: id
+                userId: id,
+                token: data[id].token
             });
             tbody.innerHTML+=`<tr>
                 <td>${data[id].stt}</td>
-                <td>${data[id].fullname}</td>
-                <td>${data[id].address}</td>
-                <td>${data[id].area}</td>
+                <td>${escapeHtml(data[id].fullname)}</td>
+                <td>${escapeHtml(data[id].address)}</td>
+                <td>${escapeHtml(data[id].area)}</td>
                 <td>${status}</td>
                 <td>${checkinTime}</td>
-                <td><button onclick="window.showQR('${id}','${data[id].token}')">🔲 QR</button></td>
-                <td><button onclick="window.exportPDF('${id}')">📄 PDF</button></td>
+                <td class="action-buttons">
+                    ${!isChecked ? `<button class="btn-manual" onclick="manualCheckin('${id}')">📝 Điểm danh thủ công</button>` : ''}
+                    <button onclick="window.showQR('${id}','${data[id].token}')">🔲 QR</button>
+                    <button onclick="window.exportPDF('${id}')">📄 PDF</button>
+                </td>
             </tr>`;
         }
         document.getElementById('totalUsers').innerText=total;
         await loadStats();
     }
+}
+
+// ĐIỂM DANH THỦ CÔNG
+window.manualCheckin = async function(id){
+    if(!confirm('Xác nhận điểm danh thủ công cho người này?')) return;
+    
+    let snap=await get(child(ref(db),'users/'+id));
+    if(!snap.exists()){
+        alert('Không tìm thấy người dùng!');
+        return;
+    }
+    
+    let data=snap.val();
+    let today=getTodayStr();
+    let exist=await get(child(ref(db),'checkins/'+id+'/'+today));
+    
+    if(exist.exists()){
+        alert(`⚠️ ${data.fullname} đã điểm danh lúc ${exist.val().time} rồi!`);
+        return;
+    }
+    
+    let now=new Date();
+    await set(ref(db,'checkins/'+id+'/'+today),{
+        userId:id,fullname:data.fullname,address:data.address,area:data.area,
+        date:today,time:formatTime(now),datetime:now.toISOString(),status:'present'
+    });
+    let total=(data.totalCheckins||0)+1;
+    await update(ref(db,'users/'+id),{totalCheckins:total,lastCheckin:now.toISOString()});
+    
+    alert(`✅ Điểm danh thành công cho ${data.fullname} lúc ${formatTime(now)}`);
+    await loadData();
+    await loadStats();
 }
 
 // XUẤT EXCEL
@@ -295,7 +338,6 @@ function exportExcel(type){
         filename = `DANH_SACH_TAT_CA_${today}.xlsx`;
     }
     
-    // Chuẩn bị dữ liệu xuất
     const exportData = dataToExport.map((item, index) => ({
         'STT': index + 1,
         'HỌ TÊN': item.fullname,
@@ -306,15 +348,10 @@ function exportExcel(type){
         'MÃ SỐ': item.userId
     }));
     
-    // Tạo worksheet và workbook
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'DanhSach');
-    
-    // Xuất file
     XLSX.writeFile(wb, filename);
-    
-    // Thông báo
     alert(`✅ Đã xuất ${dataToExport.length} người vào file ${filename}`);
 }
 
@@ -350,7 +387,7 @@ async function startBackCamera(){
         let backCamera=devices.find(d=>d.label.toLowerCase().includes('back')||d.label.toLowerCase().includes('environment')||d.label.toLowerCase().includes('rear'));
         let cameraToUse=backCamera?backCamera.id:devices[0].id;
         await html5QrCode.start(cameraToUse,{fps:10,qrbox:250},onScanSuccess);
-        document.getElementById('scanResult').innerHTML='<div class="valid">✅ Camera sau đang hoạt động. Đưa QR vào khung.</div>';
+        document.getElementById('scanResult').innerHTML='<div class="valid">✅ Camera sau đang hoạt động. Đưa QR vào khung để điểm danh.</div>';
     }catch(err){
         document.getElementById('scanResult').innerHTML='<div class="invalid">⚠️ Vui lòng cho phép truy cập camera</div>';
     }
