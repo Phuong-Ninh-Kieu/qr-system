@@ -52,7 +52,7 @@ td{border:1px solid #eee;padding:8px;text-align:center;}
 
 <div class="header">
     <h1>🏛️ ĐIỂM DANH NHẬN QUÀ</h1>
-    <p>UBNTTQVN</p>
+    <p>UBNTTQ</p>
 </div>
 
 <div id="hiddenQrEngine"></div>
@@ -359,7 +359,7 @@ async function deleteAll(){
         await remove(ref(db, 'recipients'));
         await remove(ref(db, 'received'));
         alert('Đã xóa sạch dữ liệu');
-        await loadData();
+        if(document.getElementById('total')) await loadData();
     }
 }
 
@@ -369,10 +369,9 @@ async function deleteToday(){
         let snap = await get(child(ref(db), 'received'));
         if(snap.exists()){
             for(let uid in snap.val()){
-                if(snap.val()[uid][today]) await remove(ref(db, 'received/'+uid+'/'+today));
+                if(snap.val()[uid] && snap.val()[uid][today]) await remove(ref(db, 'received/'+uid+'/'+today));
             }
         }
-        // Cập nhật lại trạng thái received trong recipients
         let recipientsSnap = await get(child(ref(db), 'recipients'));
         if(recipientsSnap.exists()){
             for(let id in recipientsSnap.val()){
@@ -380,7 +379,7 @@ async function deleteToday(){
             }
         }
         alert('Đã xóa dữ liệu hôm nay');
-        await loadData();
+        if(document.getElementById('total')) await loadData();
     }
 }
 
@@ -436,7 +435,6 @@ async function renderAdmin(){
     await loadData();
 }
 
-// HÀM IMPORT ĐÃ ĐƯỢC SỬA - KHỚP VỚI FILE MẪU
 async function importExcel(){
     let file = document.getElementById('excelFile').files[0];
     if(!file){ alert('Vui lòng chọn tệp tin Excel!'); return; }
@@ -451,9 +449,7 @@ async function importExcel(){
             return;
         }
         
-        // Lấy header dòng đầu tiên
         let headers = json[0];
-        // Tìm vị trí các cột cần thiết (không phân biệt hoa/thường, dấu cách)
         let colIndex = {
             stt: -1,
             hoTen: -1,
@@ -466,7 +462,6 @@ async function importExcel(){
         headers.forEach((h, idx) => {
             if(!h) return;
             let lowerH = String(h).toLowerCase().trim();
-            // Loại bỏ dấu cách và dấu câu để so sánh linh hoạt
             let normalized = lowerH.replace(/[_\s\u00A0]+/g, '').replace(/[.,;:!?]/g, '');
             
             if(normalized.includes('stt') || normalized === 'stt') colIndex.stt = idx;
@@ -482,7 +477,6 @@ async function importExcel(){
             else if(normalized.includes('ghichú')) colIndex.ghiChu = idx;
         });
         
-        // Kiểm tra các cột bắt buộc
         if(colIndex.hoTen === -1 || colIndex.diaChi === -1){
             alert('File Excel thiếu cột bắt buộc: "HỌ VÀ TÊN" hoặc "ĐỊA CHỈ". Vui lòng dùng file mẫu!');
             return;
@@ -536,7 +530,6 @@ async function importExcel(){
 }
 
 function downloadSample(){
-    // Tạo file mẫu đúng định dạng
     let data = [
         { "STT": 1, "HỌ VÀ TÊN": "Nguyễn Văn A", "ĐỊA CHỈ": "Số 1 Đường Lê Lợi", "THUỘC DIỆN": "Hộ nghèo", "KHU VỰC": "Tổ 1", "GHI CHÚ": "" },
         { "STT": 2, "HỌ VÀ TÊN": "Trần Thị B", "ĐỊA CHỈ": "Số 2 Đường Nguyễn Huệ", "THUỘC DIỆN": "Khó khăn", "KHU VỰC": "Tổ 2", "GHI CHÚ": "" }
@@ -581,7 +574,6 @@ async function loadData(){
         }
     }
     
-    // Sắp xếp theo STT nếu có
     allRecipients.sort((a,b) => {
         let sttA = parseInt(a.stt) || 0;
         let sttB = parseInt(b.stt) || 0;
@@ -610,9 +602,9 @@ function filterTable(){
     let tbody = document.getElementById('tableBody');
     if(!tbody) return;
     
-    let search = document.getElementById('search').value.toLowerCase();
-    let status = document.getElementById('statusFilter').value;
-    let area = document.getElementById('areaFilter').value;
+    let search = document.getElementById('search') ? document.getElementById('search').value.toLowerCase() : '';
+    let status = document.getElementById('statusFilter') ? document.getElementById('statusFilter').value : 'all';
+    let area = document.getElementById('areaFilter') ? document.getElementById('areaFilter').value : 'all';
     
     let filtered = allRecipients.filter(r => {
         let match = (r.hoTen || '').toLowerCase().includes(search) || (r.diaChi || '').toLowerCase().includes(search);
@@ -658,13 +650,16 @@ function showAdminInterface() {
 async function initSystem() {
     let verifying = await checkVerification();
     if(!verifying){
-        await loadData();
-        
+        // Kiểm tra phiên đăng nhập cũ
         if(localStorage.getItem('isAdminLoggedIn') === 'true') {
             showAdminInterface();
         } else {
             document.getElementById('loginBtn').onclick = login;
             document.getElementById('adminPassword').onkeypress = e => { if(e.key==='Enter') login(); };
+            // Đảm bảo ẩn admin panel và hiện login panel
+            document.getElementById('loginPanel').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'none';
+            document.querySelectorAll('.admin-content').forEach(el=>el.style.display='none');
         }
     }
 }
