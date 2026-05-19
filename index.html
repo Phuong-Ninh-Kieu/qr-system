@@ -2,9 +2,9 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<title>HỆ THỐNG ĐIỂM DANH QR</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<title>ĐIỂM DANH QR - UBND</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -12,56 +12,56 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Roboto',sans-serif;}
-body{background:#eef2f7;}
-.header{background:#b00000;color:#fff;padding:20px;text-align:center;border-bottom:5px solid #ffcc00;}
-.header h1{font-size:30px;margin-bottom:10px;}
-.container{width:95%;max-width:1400px;margin:20px auto;}
-.card{background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
-.card h2{color:#b00000;margin-bottom:20px;border-left:4px solid #b00000;padding-left:15px;}
-input,button,select{padding:10px;margin:5px;border:1px solid #ccc;border-radius:5px;}
-button{background:#b00000;color:#fff;cursor:pointer;font-weight:bold;border:none;}
+body{background:#eef2f7;padding-bottom:30px;}
+.header{background:#b00000;color:#fff;padding:16px;text-align:center;border-bottom:4px solid #ffcc00;}
+.header h1{font-size:22px;margin-bottom:5px;}
+.container{width:95%;max-width:600px;margin:15px auto;}
+.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+.card h2{color:#b00000;font-size:18px;margin-bottom:15px;border-left:4px solid #b00000;padding-left:12px;}
+.dashboard{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+.box{background:#b00000;color:#fff;padding:15px;border-radius:12px;text-align:center;}
+.box h3{font-size:28px;margin-bottom:5px;}
+.box p{font-size:12px;}
+button{background:#b00000;color:#fff;padding:12px 20px;border:none;border-radius:10px;font-size:14px;font-weight:bold;margin:5px;cursor:pointer;}
 button:hover{opacity:0.9;}
-.dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;}
-.box{background:#b00000;color:#fff;padding:20px;border-radius:10px;text-align:center;}
-.box h3{font-size:35px;margin-bottom:10px;}
-.table-container{overflow:auto;}
-table{width:100%;border-collapse:collapse;}
-table th{background:#b00000;color:#fff;padding:12px;}
-table td{border:1px solid #ddd;padding:10px;text-align:center;}
-.valid{background:#e8f5e9;color:#2e7d32;font-weight:bold;padding:15px;border-radius:10px;}
-.invalid{background:#ffebee;color:#c62828;font-weight:bold;padding:15px;border-radius:10px;}
-#reader{width:100%;max-width:500px;margin:auto;}
-.card-preview{width:340px;border:2px solid #b00000;padding:20px;border-radius:12px;background:#fff;margin-top:20px;margin:auto;}
-.card-preview h3{color:#b00000;text-align:center;margin-bottom:15px;}
-.footer{text-align:center;padding:20px;color:#666;}
-.verify-card{max-width:500px;margin:20px auto;background:white;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.2);}
-.verify-header{background:#b00000;color:white;padding:25px;text-align:center;}
-.verify-content{padding:30px;}
-.result-status{font-size:28px;font-weight:900;padding:15px;border-radius:12px;text-align:center;margin:20px 0;}
-.info-row{padding:10px 0;border-bottom:1px solid #eee;display:flex;}
-.info-label{font-weight:700;width:100px;}
-.info-value{flex:1;}
-.camera-selector{background:#f5f5f5;padding:15px;border-radius:10px;margin-bottom:15px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-.camera-selector select{flex:1;min-width:200px;}
-.camera-selector button{background:#2196f3;}
-.badge-present{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;background:#e8f5e9;color:#2e7d32;}
-.badge-absent{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;background:#ffebee;color:#c62828;}
+.btn-green{background:#2e7d32;}
+.btn-orange{background:#ff9800;}
+.btn-blue{background:#2196f3;}
+input{padding:12px;border:1px solid #ccc;border-radius:10px;margin:5px;}
+.table-container{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:#b00000;color:#fff;padding:10px;}
+td{border:1px solid #ddd;padding:8px;text-align:center;}
+.valid{background:#e8f5e9;color:#2e7d32;padding:15px;border-radius:12px;}
+.invalid{background:#ffebee;color:#c62828;padding:15px;border-radius:12px;}
+#reader{width:100%;max-width:100%;margin:auto;}
+.card-preview{width:300px;margin:auto;border:2px solid #b00000;padding:20px;border-radius:16px;background:#fff;}
+.footer{text-align:center;padding:15px;color:#666;font-size:12px;}
+.verify-card{max-width:450px;margin:20px auto;background:white;border-radius:20px;overflow:hidden;}
+.verify-header{background:#b00000;color:white;padding:20px;text-align:center;}
+.verify-content{padding:25px;}
+.result-status{font-size:24px;font-weight:bold;padding:12px;border-radius:12px;text-align:center;margin:15px 0;}
+.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:bold;}
+.badge-success{background:#e8f5e9;color:#2e7d32;}
+.badge-warning{background:#ffebee;color:#c62828;}
+.export-buttons{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;}
+.export-buttons button{flex:1;min-width:120px;}
 </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>🏛️ HỆ THỐNG ĐIỂM DANH QR</h1>
-    <p>ỦY BAN NHÂN DÂN - CHECK-IN BẰNG QR</p>
+    <h1>🏛️ ĐIỂM DANH BẰNG QR</h1>
+    <p>ỦY BAN NHÂN DÂN</p>
 </div>
 
 <div id="adminPanel" class="container"></div>
 <div id="verifyPanel" style="display:none;"></div>
-<div class="footer" id="footer">© HỆ THỐNG ĐIỂM DANH QR</div>
+<div class="footer">HỆ THỐNG ĐIỂM DANH QR</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, set, get, child, update, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, set, get, child, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = { 
     apiKey: "AIzaSyCnrj2LgPIhmHQ-2gFsj2WzEa1n0RzWrbw",
@@ -76,370 +76,330 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-let currentCameraId = null;
-let cameraDevices = [];
 let html5QrCode = null;
+let allUsersData = [];
+let checkedTodayData = {};
 
-function randomToken(length = 32) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for(let i = 0; i < length; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-    return result;
-}
+function randomToken(len=32){let s='';for(let i=0;i<len;i++)s+='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(Math.random()*62)];return s;}
+function escapeHtml(str){if(!str)return'';return str.replace(/[&<>]/g,function(m){if(m==='&')return'&amp;';if(m==='<')return'&lt;';if(m==='>')return'&gt;';return m;});}
+function formatTime(d){return d.toLocaleTimeString('vi-VN');}
+function formatDate(d){return d.toLocaleDateString('vi-VN');}
+function getTodayStr(){return new Date().toISOString().split('T')[0];}
+function getBaseUrl(){return window.location.href.split('?')[0];}
 
-function escapeHtml(str) { if (!str) return ''; return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
-function formatDate(date) { return date.toLocaleDateString('vi-VN'); }
-function formatTime(date) { return date.toLocaleTimeString('vi-VN'); }
-function getTodayStr() { return new Date().toISOString().split('T')[0]; }
-function getBaseUrl() { return window.location.href.split('?')[0]; }
-
-// ========== KIỂM TRA URL XÁC THỰC ==========
-async function checkVerification() {
-    const urlParams = new URLSearchParams(window.location.search);
-    let id = urlParams.get('id');
-    let token = urlParams.get('token');
-    
-    if (!id && window.location.href.includes('?id=')) {
-        const match = window.location.href.match(/[?&]id=([^&]+)/);
-        if (match) id = match[1];
-        const tokenMatch = window.location.href.match(/[?&]token=([^&]+)/);
-        if (tokenMatch) token = tokenMatch[1];
+// Xác thực khi quét QR
+async function checkVerification(){
+    let id = new URLSearchParams(location.search).get('id');
+    let token = new URLSearchParams(location.search).get('token');
+    if(!id && location.href.includes('?id=')){
+        let m=location.href.match(/[?&]id=([^&]+)/);
+        if(m)id=m[1];
+        let tm=location.href.match(/[?&]token=([^&]+)/);
+        if(tm)token=tm[1];
     }
-    
-    if (id && token) {
-        document.getElementById('adminPanel').style.display = 'none';
-        document.getElementById('verifyPanel').style.display = 'block';
-        await processCheckinFromQR(id, token);
+    if(id&&token){
+        document.getElementById('adminPanel').style.display='none';
+        document.getElementById('verifyPanel').style.display='block';
+        await doCheckin(id,token);
         return true;
     }
     return false;
 }
 
-async function processCheckinFromQR(id, token) {
-    const verifyDiv = document.getElementById('verifyPanel');
-    
-    try {
-        const snapshot = await get(child(ref(db), 'users/' + id));
-        if (!snapshot.exists()) {
-            verifyDiv.innerHTML = `<div class="verify-card"><div class="verify-header"><h2>🔍 KẾT QUẢ</h2></div><div class="verify-content"><div style="text-align:center;font-size:60px;">❌</div><div class="result-status" style="background:#ffebee;color:#c62828;">KHÔNG HỢP LỆ</div><p>Mã QR không tồn tại</p><button onclick="window.location.href=window.location.pathname" style="width:100%;padding:12px;margin-top:20px;background:#b00000;color:white;border:none;border-radius:8px;">ĐÓNG</button></div></div>`;
+async function doCheckin(id,token){
+    let div=document.getElementById('verifyPanel');
+    try{
+        let snap=await get(child(ref(db),'users/'+id));
+        if(!snap.exists()){
+            div.innerHTML=`<div class="verify-card"><div class="verify-header"><h2>🔍 KẾT QUẢ</h2></div><div class="verify-content"><div style="font-size:50px;text-align:center;">❌</div><div class="result-status" style="background:#ffebee;color:#c62828;">KHÔNG HỢP LỆ</div><p>Mã QR không tồn tại</p><button onclick="location.href=location.pathname" style="width:100%;padding:12px;background:#b00000;color:white;border:none;border-radius:10px;">ĐÓNG</button></div></div>`;
             return;
         }
-        
-        const data = snapshot.val();
-        if (data.token !== token) {
-            verifyDiv.innerHTML = `<div class="verify-card"><div class="verify-header"><h2>🔍 KẾT QUẢ</h2></div><div class="verify-content"><div style="text-align:center;font-size:60px;">⚠️</div><div class="result-status" style="background:#ffebee;color:#c62828;">KHÔNG HỢP LỆ</div><p>Token không hợp lệ</p><button onclick="window.location.href=window.location.pathname" style="width:100%;padding:12px;margin-top:20px;background:#b00000;color:white;border:none;border-radius:8px;">ĐÓNG</button></div></div>`;
+        let data=snap.val();
+        if(data.token!==token){
+            div.innerHTML=`<div class="verify-card"><div class="verify-header"><h2>🔍 KẾT QUẢ</h2></div><div class="verify-content"><div style="font-size:50px;text-align:center;">⚠️</div><div class="result-status" style="background:#ffebee;color:#c62828;">KHÔNG HỢP LỆ</div><p>Token không đúng</p><button onclick="location.href=location.pathname" style="width:100%;padding:12px;background:#b00000;color:white;border:none;border-radius:10px;">ĐÓNG</button></div></div>`;
             return;
         }
-        
-        const today = getTodayStr();
-        const checkinSnapshot = await get(child(ref(db), 'checkins/' + id + '/' + today));
-        
-        if (checkinSnapshot.exists()) {
-            const existing = checkinSnapshot.val();
-            verifyDiv.innerHTML = `<div class="verify-card"><div class="verify-header" style="background:#ff9800;"><h2>⚠️ ĐÃ ĐIỂM DANH</h2></div><div class="verify-content"><div style="text-align:center;font-size:60px;">⏰</div><div class="result-status" style="background:#fff3e0;color:#e65100;">ĐÃ CHECK-IN</div><div style="background:#f5f5f5;border-radius:12px;padding:15px;"><div class="info-row"><span class="info-label">👤 Họ tên:</span><span class="info-value">${escapeHtml(data.fullname)}</span></div><div class="info-row"><span class="info-label">⏰ Giờ:</span><span class="info-value">${existing.time}</span></div></div><button onclick="window.location.href=window.location.pathname" style="width:100%;padding:12px;margin-top:20px;background:#ff9800;color:white;border:none;border-radius:8px;">ĐÓNG</button></div></div>`;
+        let today=getTodayStr();
+        let exist=await get(child(ref(db),'checkins/'+id+'/'+today));
+        if(exist.exists()){
+            let old=exist.val();
+            div.innerHTML=`<div class="verify-card"><div class="verify-header" style="background:#ff9800;"><h2>⚠️ ĐÃ ĐIỂM DANH</h2></div><div class="verify-content"><div style="font-size:50px;text-align:center;">⏰</div><div class="result-status" style="background:#fff3e0;color:#e65100;">ĐÃ CHECK-IN</div><div style="background:#f5f5f5;border-radius:12px;padding:15px;"><p><strong>${escapeHtml(data.fullname)}</strong></p><p>Giờ: ${old.time}</p></div><button onclick="location.href=location.pathname" style="width:100%;padding:12px;margin-top:15px;background:#ff9800;border:none;border-radius:10px;">ĐÓNG</button></div></div>`;
             return;
         }
-        
-        const now = new Date();
-        await set(ref(db, 'checkins/' + id + '/' + today), {
-            userId: id, fullname: data.fullname, address: data.address, area: data.area,
-            date: today, time: formatTime(now), datetime: now.toISOString(), status: 'present'
+        let now=new Date();
+        await set(ref(db,'checkins/'+id+'/'+today),{
+            userId:id,fullname:data.fullname,address:data.address,area:data.area,
+            date:today,time:formatTime(now),datetime:now.toISOString(),status:'present'
         });
-        let totalCheckins = (data.totalCheckins || 0) + 1;
-        await update(ref(db, 'users/' + id), { totalCheckins, lastCheckin: now.toISOString() });
-        
-        verifyDiv.innerHTML = `<div class="verify-card"><div class="verify-header" style="background:#2e7d32;"><h2>✅ ĐIỂM DANH THÀNH CÔNG</h2></div><div class="verify-content"><div style="text-align:center;font-size:60px;">✅</div><div class="result-status" style="background:#e8f5e9;color:#2e7d32;">CHECK-IN THÀNH CÔNG</div><div style="background:#f5f5f5;border-radius:12px;padding:15px;"><div class="info-row"><span class="info-label">👤 Họ tên:</span><span class="info-value">${escapeHtml(data.fullname)}</span></div><div class="info-row"><span class="info-label">📍 Địa chỉ:</span><span class="info-value">${escapeHtml(data.address)}</span></div><div class="info-row"><span class="info-label">⏰ Giờ:</span><span class="info-value">${formatTime(now)}</span></div></div><button onclick="window.location.href=window.location.pathname" style="width:100%;padding:12px;margin-top:20px;background:#2e7d32;color:white;border:none;border-radius:8px;">✓ XÁC NHẬN</button></div></div>`;
-        if (typeof loadData === 'function') await loadData();
-        if (typeof loadCheckinStats === 'function') await loadCheckinStats();
-    } catch (error) {
-        verifyDiv.innerHTML = `<div class="verify-card"><div class="verify-header"><h2>⚠️ LỖI</h2></div><div class="verify-content"><p>Lỗi kết nối</p><button onclick="location.reload()" style="width:100%;padding:12px;margin-top:20px;">THỬ LẠI</button></div></div>`;
-    }
+        let total=(data.totalCheckins||0)+1;
+        await update(ref(db,'users/'+id),{totalCheckins:total,lastCheckin:now.toISOString()});
+        div.innerHTML=`<div class="verify-card"><div class="verify-header" style="background:#2e7d32;"><h2>✅ ĐIỂM DANH THÀNH CÔNG</h2></div><div class="verify-content"><div style="font-size:50px;text-align:center;">✅</div><div class="result-status" style="background:#e8f5e9;color:#2e7d32;">THÀNH CÔNG</div><div style="background:#f5f5f5;border-radius:12px;padding:15px;"><p><strong>${escapeHtml(data.fullname)}</strong></p><p>⏰ ${formatTime(now)}</p><p>📍 ${escapeHtml(data.address)}</p></div><button onclick="location.href=location.pathname" style="width:100%;padding:12px;margin-top:15px;background:#2e7d32;border:none;border-radius:10px;">XÁC NHẬN</button></div></div>`;
+        if(typeof loadData==='function')await loadData();
+        if(typeof loadStats==='function')await loadStats();
+    }catch(e){console.log(e);}
 }
 
-// ========== ADMIN INTERFACE ==========
-async function renderAdmin() {
-    const baseUrl = getBaseUrl();
-    
-    document.getElementById('adminPanel').innerHTML = `
-        <div class="card"><h2>📊 DASHBOARD ĐIỂM DANH</h2><div class="dashboard">
-            <div class="box"><h3 id="totalUsers">0</h3><p>👥 TỔNG NHÂN KHẨU</p></div>
-            <div class="box"><h3 id="totalCheckins">0</h3><p>✅ ĐÃ ĐIỂM DANH</p></div>
-            <div class="box"><h3 id="notCheckin">0</h3><p>⏳ CHƯA ĐIỂM DANH</p></div>
-            <div class="box"><h3 id="checkinRate">0</h3><p>📈 TỶ LỆ (%)</p></div>
+// ADMIN
+async function renderAdmin(){
+    let baseUrl=getBaseUrl();
+    document.getElementById('adminPanel').innerHTML=`
+        <div class="card"><h2>📊 THỐNG KÊ</h2><div class="dashboard">
+            <div class="box"><h3 id="totalUsers">0</h3><p>TỔNG</p></div>
+            <div class="box"><h3 id="totalCheckins">0</h3><p>ĐÃ ĐIỂM DANH</p></div>
+            <div class="box"><h3 id="notCheckin">0</h3><p>CHƯA</p></div>
+            <div class="box"><h3 id="checkinRate">0</h3><p>TỶ LỆ</p></div>
         </div></div>
-        
-        <div class="card"><h2>📂 IMPORT DANH SÁCH EXCEL</h2>
+        <div class="card"><h2>📂 IMPORT EXCEL</h2>
             <input type="file" id="excelFile" accept=".xlsx,.xls">
             <button id="importBtn">📤 IMPORT</button>
         </div>
-        
-        <div class="card"><h2>📷 QUÉT QR ĐIỂM DANH</h2>
-            <div class="camera-selector">
-                <span>📹 Chọn camera:</span>
-                <select id="cameraSelect"></select>
-                <button id="switchCameraBtn">🔄 ĐỔI CAMERA</button>
-            </div>
+        <div class="card"><h2>📷 QUÉT QR</h2>
             <div id="reader"></div>
-            <div id="scanResult" style="margin-top:20px;"></div>
+            <div id="scanResult" style="margin-top:12px;"></div>
         </div>
-        
         <div class="card"><h2>📋 DANH SÁCH ĐIỂM DANH HÔM NAY</h2>
-            <div class="table-container"><table><thead><tr><th>STT</th><th>HỌ TÊN</th><th>KHU VỰC</th><th>TRẠNG THÁI</th><th>GIỜ CHECK-IN</th><th>QR</th><th>PDF</th></tr></thead><tbody id="tableData"></tbody></table></div>
+            <div class="export-buttons">
+                <button id="exportCheckedBtn" class="btn-green">📥 Xuất Đã điểm danh</button>
+                <button id="exportUncheckedBtn" class="btn-orange">📥 Xuất Chưa điểm danh</button>
+                <button id="exportAllBtn" class="btn-blue">📥 Xuất Tất cả</button>
+            </div>
+            <div class="table-container" style="margin-top:15px;">
+                <table>
+                    <thead><tr><th>STT</th><th>HỌ TÊN</th><th>ĐỊA CHỈ</th><th>KHU VỰC</th><th>TRẠNG THÁI</th><th>GIỜ CHECK-IN</th><th>QR</th><th>PDF</th></tr></thead>
+                    <tbody id="tableData"></tbody>
+                </table>
+            </div>
         </div>
-        
-        <div class="card"><h2>🖨️ XUẤT THẺ QR</h2>
-            <div id="cardArea"></div>
-        </div>
+        <div class="card"><h2>🖨️ XUẤT THẺ</h2><div id="cardArea"></div></div>
     `;
-    
-    document.getElementById('importBtn').onclick = () => importExcel(baseUrl);
-    document.getElementById('switchCameraBtn').onclick = switchCamera;
+    document.getElementById('importBtn').onclick=()=>importExcel(baseUrl);
+    document.getElementById('exportCheckedBtn').onclick=()=>exportExcel('checked');
+    document.getElementById('exportUncheckedBtn').onclick=()=>exportExcel('unchecked');
+    document.getElementById('exportAllBtn').onclick=()=>exportExcel('all');
     await loadData();
-    await loadCheckinStats();
-    await initCameraList();
+    await loadStats();
+    startBackCamera();
 }
 
-async function loadCheckinStats() {
-    const today = getTodayStr();
-    const snapshot = await get(child(ref(db), 'checkins'));
-    let checkedInToday = 0;
-    if (snapshot.exists()) {
-        const checkins = snapshot.val();
-        for (let userId in checkins) {
-            if (checkins[userId][today]) checkedInToday++;
+async function loadStats(){
+    let today=getTodayStr();
+    let snap=await get(child(ref(db),'checkins'));
+    let checked=0;
+    if(snap.exists()){
+        for(let uid in snap.val()){
+            if(snap.val()[uid][today])checked++;
         }
     }
-    const totalUsers = parseInt(document.getElementById('totalUsers')?.innerText || 0);
-    const notCheckin = totalUsers - checkedInToday;
-    const rate = totalUsers > 0 ? Math.round((checkedInToday / totalUsers) * 100) : 0;
-    document.getElementById('totalCheckins').innerText = checkedInToday;
-    document.getElementById('notCheckin').innerText = notCheckin;
-    document.getElementById('checkinRate').innerText = rate;
+    let total=parseInt(document.getElementById('totalUsers')?.innerText||0);
+    document.getElementById('totalCheckins').innerText=checked;
+    document.getElementById('notCheckin').innerText=total-checked;
+    let rate=total>0?Math.round(checked/total*100):0;
+    document.getElementById('checkinRate').innerText=rate;
 }
 
-window.importExcel = async function(baseUrl) {
-    const file = document.getElementById('excelFile').files[0];
-    if (!file) { alert('Chọn file Excel'); return; }
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(sheet);
-        for (let item of json) {
-            const values = Object.values(item);
-            const stt = values[0] || '';
-            const fullname = values[1] || '';
-            const address = values[2] || '';
-            const area = values[3] || '';
-            const id = 'QR' + Date.now() + Math.floor(Math.random() * 1000);
-            const token = randomToken();
-            const verifyURL = baseUrl + '?id=' + id + '&token=' + token;
-            await set(ref(db, 'users/' + id), { stt, fullname, address, area, token, qr: verifyURL, scan: 0, totalCheckins: 0, createdAt: new Date().toISOString() });
+async function importExcel(baseUrl){
+    let file=document.getElementById('excelFile').files[0];
+    if(!file){alert('Chọn file Excel');return;}
+    let reader=new FileReader();
+    reader.onload=async function(e){
+        let wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        let sheet=wb.Sheets[wb.SheetNames[0]];
+        let json=XLSX.utils.sheet_to_json(sheet);
+        for(let item of json){
+            let v=Object.values(item);
+            let id='QR'+Date.now()+Math.floor(Math.random()*1000);
+            let token=randomToken();
+            let url=baseUrl+'?id='+id+'&token='+token;
+            await set(ref(db,'users/'+id),{
+                stt:v[0]||'',fullname:v[1]||'',address:v[2]||'',area:v[3]||'',
+                token:token,qr:url,scan:0,totalCheckins:0,createdAt:new Date().toISOString()
+            });
         }
-        alert('✅ IMPORT THÀNH CÔNG');
+        alert('✅ Import thành công!');
         await loadData();
-        await loadCheckinStats();
     };
     reader.readAsArrayBuffer(file);
 }
 
-async function loadData() {
-    const snapshot = await get(child(ref(db), 'users'));
-    const tbody = document.getElementById('tableData');
-    const today = getTodayStr();
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    let total = 0;
-    
-    const checkinSnapshot = await get(child(ref(db), 'checkins'));
-    let checkedToday = {};
-    if (checkinSnapshot.exists()) {
-        const checkins = checkinSnapshot.val();
-        for (let userId in checkins) {
-            if (checkins[userId][today]) checkedToday[userId] = checkins[userId][today];
+async function loadData(){
+    let snap=await get(child(ref(db),'users'));
+    let tbody=document.getElementById('tableData');
+    if(!tbody)return;
+    tbody.innerHTML='';
+    let today=getTodayStr();
+    let checkSnap=await get(child(ref(db),'checkins'));
+    let checked={};
+    if(checkSnap.exists()){
+        for(let uid in checkSnap.val()){
+            if(checkSnap.val()[uid][today])checked[uid]=checkSnap.val()[uid][today];
         }
     }
+    checkedTodayData = checked;
+    allUsersData = [];
     
-    if (snapshot.exists()) {
-        const data = snapshot.val();
-        for (let id in data) {
+    if(snap.exists()){
+        let data=snap.val();
+        let total=0;
+        for(let id in data){
             total++;
-            const isChecked = checkedToday[id];
-            const status = isChecked ? `<span class="badge-present">✅ ${isChecked.time}</span>` : `<span class="badge-absent">⏳ Chưa</span>`;
-            tbody.innerHTML += `<tr><td>${data[id].stt}</td><td>${data[id].fullname}</td><td>${data[id].area}</td><td>${status}</td><td><button onclick="manualCheckin('${id}')">📝 Điểm danh</button></td><td><button onclick="window.showQR('${id}','${data[id].token}')">🔲 QR</button></td><td><button onclick="window.exportPDF('${id}')">📄 PDF</button></td></tr>`;
-        }
-    }
-    document.getElementById('totalUsers').innerText = total;
-    await loadCheckinStats();
-}
-
-window.manualCheckin = async function(id) {
-    if (confirm('Xác nhận điểm danh thủ công?')) {
-        const snapshot = await get(child(ref(db), 'users/' + id));
-        if (snapshot.exists()) {
-            const data = snapshot.val();
-            const today = getTodayStr();
-            const existing = await get(child(ref(db), 'checkins/' + id + '/' + today));
-            if (existing.exists()) {
-                alert('Đã điểm danh hôm nay rồi!');
-                return;
-            }
-            const now = new Date();
-            await set(ref(db, 'checkins/' + id + '/' + today), {
-                userId: id, fullname: data.fullname, address: data.address, area: data.area,
-                date: today, time: formatTime(now), datetime: now.toISOString(), status: 'present'
+            let isChecked=checked[id];
+            let status=isChecked?`<span class="badge badge-success">✅ Đã điểm danh</span>`:`<span class="badge badge-warning">⏳ Chưa điểm danh</span>`;
+            let checkinTime=isChecked?isChecked.time:'---';
+            allUsersData.push({
+                stt: data[id].stt,
+                fullname: data[id].fullname,
+                address: data[id].address,
+                area: data[id].area,
+                status: isChecked?'Đã điểm danh':'Chưa điểm danh',
+                checkinTime: checkinTime,
+                userId: id
             });
-            let totalCheckins = (data.totalCheckins || 0) + 1;
-            await update(ref(db, 'users/' + id), { totalCheckins, lastCheckin: now.toISOString() });
-            alert('✅ Điểm danh thành công!');
-            await loadData();
+            tbody.innerHTML+=`<tr>
+                <td>${data[id].stt}</td>
+                <td>${data[id].fullname}</td>
+                <td>${data[id].address}</td>
+                <td>${data[id].area}</td>
+                <td>${status}</td>
+                <td>${checkinTime}</td>
+                <td><button onclick="window.showQR('${id}','${data[id].token}')">🔲 QR</button></td>
+                <td><button onclick="window.exportPDF('${id}')">📄 PDF</button></td>
+            </tr>`;
         }
+        document.getElementById('totalUsers').innerText=total;
+        await loadStats();
     }
 }
 
-window.showQR = function(id, token) {
-    const baseUrl = getBaseUrl();
-    const url = baseUrl + '?id=' + id + '&token=' + token;
-    document.getElementById('cardArea').innerHTML = `<div class="card-preview" id="pdfCard"><h3>🎫 THẺ ĐIỂM DANH</h3><div id="qrcode"></div><p><strong>Mã số:</strong> ${id}</p><p style="font-size:11px;">Quét QR để điểm danh</p></div>`;
-    new QRCode(document.getElementById('qrcode'), { text: url, width: 220, height: 220 });
-}
-
-window.exportPDF = async function(id) {
-    const card = document.getElementById('pdfCard');
-    if (!card) { alert('Vui lòng nhấn "XEM QR" trước'); return; }
-    const canvas = await html2canvas(card);
-    const imgData = canvas.toDataURL('image/png');
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-    pdf.addImage(imgData, 'PNG', 10, 10, 90, 120);
-    pdf.save(id + '.pdf');
-}
-
-// ========== CAMERA - CÓ THỂ CHỌN CAMERA TRƯỚC/SAU ==========
-async function initCameraList() {
-    try {
-        const devices = await Html5Qrcode.getCameras();
-        cameraDevices = devices;
-        const select = document.getElementById('cameraSelect');
-        if (!select) return;
-        
-        select.innerHTML = '<option value="">-- Chọn camera --</option>';
-        devices.forEach((device, index) => {
-            const label = device.label || `Camera ${index + 1}`;
-            const isBack = label.toLowerCase().includes('back') || label.toLowerCase().includes('environment') || label.toLowerCase().includes('rear');
-            const isFront = label.toLowerCase().includes('front') || label.toLowerCase().includes('user');
-            let type = '';
-            if (isBack) type = '📷 (Camera sau)';
-            else if (isFront) type = '🤳 (Camera trước)';
-            select.innerHTML += `<option value="${device.id}">${label} ${type}</option>`;
-        });
-        
-        // Mặc định chọn camera sau nếu có
-        const backCamera = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('environment'));
-        if (backCamera) {
-            select.value = backCamera.id;
-            currentCameraId = backCamera.id;
-        } else if (devices.length > 0) {
-            select.value = devices[0].id;
-            currentCameraId = devices[0].id;
+// XUẤT EXCEL
+function exportExcel(type){
+    let dataToExport = [];
+    let filename = '';
+    let today = formatDate(new Date());
+    
+    if(type === 'checked'){
+        dataToExport = allUsersData.filter(u => u.status === 'Đã điểm danh');
+        filename = `DANH_SACH_DA_DIEM_DANH_${today}.xlsx`;
+        if(dataToExport.length === 0){
+            alert('Chưa có ai điểm danh hôm nay!');
+            return;
         }
-        
-        if (currentCameraId) {
-            await startCamera(currentCameraId);
+    } else if(type === 'unchecked'){
+        dataToExport = allUsersData.filter(u => u.status === 'Chưa điểm danh');
+        filename = `DANH_SACH_CHUA_DIEM_DANH_${today}.xlsx`;
+        if(dataToExport.length === 0){
+            alert('Tất cả đã điểm danh hôm nay!');
+            return;
         }
-    } catch (err) {
-        console.log('Lỗi lấy danh sách camera:', err);
-        document.getElementById('scanResult').innerHTML = '<div class="invalid">⚠️ Vui lòng cho phép truy cập camera</div>';
+    } else {
+        dataToExport = allUsersData;
+        filename = `DANH_SACH_TAT_CA_${today}.xlsx`;
+    }
+    
+    // Chuẩn bị dữ liệu xuất
+    const exportData = dataToExport.map((item, index) => ({
+        'STT': index + 1,
+        'HỌ TÊN': item.fullname,
+        'ĐỊA CHỈ': item.address,
+        'KHU VỰC': item.area,
+        'TRẠNG THÁI': item.status,
+        'GIỜ CHECK-IN': item.checkinTime,
+        'MÃ SỐ': item.userId
+    }));
+    
+    // Tạo worksheet và workbook
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'DanhSach');
+    
+    // Xuất file
+    XLSX.writeFile(wb, filename);
+    
+    // Thông báo
+    alert(`✅ Đã xuất ${dataToExport.length} người vào file ${filename}`);
+}
+
+window.showQR=function(id,token){
+    let url=getBaseUrl()+'?id='+id+'&token='+token;
+    document.getElementById('cardArea').innerHTML=`<div class="card-preview" id="pdfCard"><h3>🎫 THẺ ĐIỂM DANH</h3><div id="qrcode"></div><p>Mã: ${id}</p><p style="font-size:11px;">Quét QR để điểm danh</p></div>`;
+    new QRCode(document.getElementById('qrcode'),{text:url,width:220,height:220});
+}
+window.exportPDF=async function(id){
+    let card=document.getElementById('pdfCard');
+    if(!card){alert('Xem QR trước');return;}
+    let canvas=await html2canvas(card);
+    let {jsPDF}=window.jspdf;
+    let pdf=new jsPDF();
+    pdf.addImage(canvas.toDataURL('image/png'),'PNG',10,10,90,120);
+    pdf.save(id+'.pdf');
+}
+
+// TỰ ĐỘNG CHỌN CAMERA SAU
+async function startBackCamera(){
+    let readerDiv=document.getElementById('reader');
+    if(!readerDiv)return;
+    if(html5QrCode){
+        try{await html5QrCode.stop();}catch(e){}
+    }
+    html5QrCode=new Html5Qrcode("reader");
+    try{
+        let devices=await Html5Qrcode.getCameras();
+        if(devices.length===0){
+            document.getElementById('scanResult').innerHTML='<div class="invalid">❌ Không tìm thấy camera</div>';
+            return;
+        }
+        let backCamera=devices.find(d=>d.label.toLowerCase().includes('back')||d.label.toLowerCase().includes('environment')||d.label.toLowerCase().includes('rear'));
+        let cameraToUse=backCamera?backCamera.id:devices[0].id;
+        await html5QrCode.start(cameraToUse,{fps:10,qrbox:250},onScanSuccess);
+        document.getElementById('scanResult').innerHTML='<div class="valid">✅ Camera sau đang hoạt động. Đưa QR vào khung.</div>';
+    }catch(err){
+        document.getElementById('scanResult').innerHTML='<div class="invalid">⚠️ Vui lòng cho phép truy cập camera</div>';
     }
 }
 
-async function startCamera(cameraId) {
-    if (html5QrCode) {
-        try {
-            await html5QrCode.stop();
-        } catch(e) {}
-    }
-    
-    html5QrCode = new Html5Qrcode("reader");
-    try {
-        await html5QrCode.start(cameraId, { fps: 10, qrbox: 250 }, onScanSuccess);
-        currentCameraId = cameraId;
-        document.getElementById('scanResult').innerHTML = '<div style="background:#e8f5e9;padding:8px;border-radius:8px;">✅ Camera đang hoạt động. Đưa QR vào khung để quét.</div>';
-    } catch (err) {
-        console.log('Lỗi start camera:', err);
-        document.getElementById('scanResult').innerHTML = '<div class="invalid">❌ Không thể mở camera. Vui lòng thử camera khác.</div>';
+function onScanSuccess(text){
+    try{
+        let url=new URL(text);
+        let id=url.searchParams.get('id');
+        let token=url.searchParams.get('token');
+        if(id&&token)verifyAndCheckin(id,token);
+        else document.getElementById('scanResult').innerHTML='<div class="invalid">✗ QR sai định dạng</div>';
+    }catch(e){
+        document.getElementById('scanResult').innerHTML='<div class="invalid">✗ QR không hợp lệ</div>';
     }
 }
 
-async function switchCamera() {
-    const select = document.getElementById('cameraSelect');
-    const newCameraId = select.value;
-    if (!newCameraId) {
-        alert('Vui lòng chọn camera');
+async function verifyAndCheckin(id,token){
+    let snap=await get(child(ref(db),'users/'+id));
+    let resDiv=document.getElementById('scanResult');
+    if(!snap.exists()){
+        resDiv.innerHTML='<div class="invalid">❌ Không tìm thấy</div>';
         return;
     }
-    await startCamera(newCameraId);
-}
-
-function onScanSuccess(decodedText) {
-    try {
-        const url = new URL(decodedText);
-        const id = url.searchParams.get('id');
-        const token = url.searchParams.get('token');
-        if (id && token) verifyQRAndCheckin(id, token);
-        else document.getElementById('scanResult').innerHTML = '<div class="invalid">✗ QR không đúng định dạng</div>';
-    } catch(e) { 
-        document.getElementById('scanResult').innerHTML = '<div class="invalid">✗ QR không hợp lệ</div>';
-    }
-}
-
-async function verifyQRAndCheckin(id, token) {
-    const snapshot = await get(child(ref(db), 'users/' + id));
-    const resultDiv = document.getElementById('scanResult');
-    
-    if (!snapshot.exists()) {
-        resultDiv.innerHTML = `<div class="invalid">❌ KHÔNG TÌM THẤY</div>`;
+    let data=snap.val();
+    if(data.token!==token){
+        resDiv.innerHTML='<div class="invalid">❌ QR không hợp lệ</div>';
         return;
     }
-    
-    const data = snapshot.val();
-    if (data.token !== token) {
-        resultDiv.innerHTML = `<div class="invalid">❌ QR KHÔNG HỢP LỆ</div>`;
+    let today=getTodayStr();
+    let exist=await get(child(ref(db),'checkins/'+id+'/'+today));
+    if(exist.exists()){
+        resDiv.innerHTML=`<div class="invalid">⚠️ ${data.fullname} đã điểm danh lúc ${exist.val().time}</div>`;
         return;
     }
-    
-    const today = getTodayStr();
-    const existing = await get(child(ref(db), 'checkins/' + id + '/' + today));
-    
-    if (existing.exists()) {
-        resultDiv.innerHTML = `<div class="invalid">⚠️ ${data.fullname} đã điểm danh lúc ${existing.val().time}</div>`;
-        return;
-    }
-    
-    const now = new Date();
-    await set(ref(db, 'checkins/' + id + '/' + today), {
-        userId: id, fullname: data.fullname, address: data.address, area: data.area,
-        date: today, time: formatTime(now), datetime: now.toISOString(), status: 'present'
+    let now=new Date();
+    await set(ref(db,'checkins/'+id+'/'+today),{
+        userId:id,fullname:data.fullname,address:data.address,area:data.area,
+        date:today,time:formatTime(now),datetime:now.toISOString(),status:'present'
     });
-    let totalCheckins = (data.totalCheckins || 0) + 1;
-    await update(ref(db, 'users/' + id), { totalCheckins, lastCheckin: now.toISOString() });
-    
-    resultDiv.innerHTML = `<div class="valid">✅ ĐIỂM DANH THÀNH CÔNG!<br><br>👤 ${data.fullname}<br>📍 ${data.address}<br>⏰ ${formatTime(now)}</div>`;
+    let total=(data.totalCheckins||0)+1;
+    await update(ref(db,'users/'+id),{totalCheckins:total});
+    resDiv.innerHTML=`<div class="valid">✅ ĐIỂM DANH THÀNH CÔNG!<br>👤 ${data.fullname}<br>⏰ ${formatTime(now)}</div>`;
     await loadData();
-    await loadCheckinStats();
-    
-    // Phát âm thanh thông báo (tùy chọn)
-    try {
-        const audio = new Audio('data:audio/wav;base64,U3RlYWx0aCBpcyB0aGUgYmVzdA==');
-        // Không có âm thanh thực tế, chỉ để rung
-    } catch(e) {}
+    await loadStats();
 }
 
-const isVerifying = await checkVerification();
-if (!isVerifying) {
-    await renderAdmin();
-}
+let isVerifying=await checkVerification();
+if(!isVerifying) await renderAdmin();
 </script>
 </body>
 </html>
