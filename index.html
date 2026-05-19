@@ -106,18 +106,11 @@ let isAdmin = false;
 const ADMIN_PASSWORD = "ubnd2024";
 
 // ==========================================
-// HÀM XỬ LÝ THOÁT HẲN KHÔNG QUAY LẠI TRANG ĐĂNG NHẬP
+// HÀM QUAY LẠI MÀN HÌNH CHÍNH ĐỂ QUÉT TIẾP
 // ==========================================
-window.closeWindow = function() {
-    // 1. Cố gắng đóng cửa sổ hiện tại (Hiệu quả trên máy tính và một số ứng dụng quét mã)
-    window.open('', '_self', '');
-    window.close();
-    
-    // 2. Chuyển hướng ngay lập tức sang trang trống tuyệt đối để hủy trang cũ (Phòng chống quay lui)
-    window.location.replace("about:blank");
-    
-    // 3. Xóa toàn bộ nội dung hiển thị trong trường hợp trình duyệt giữ lại bộ nhớ cache
-    document.body.innerHTML = '';
+window.backToScanner = function() {
+    // Điều hướng trang về địa chỉ gốc (bỏ đi đoạn ?id=...) để sẵn sàng quét người tiếp theo
+    window.location.href = window.location.href.split('?')[0];
 };
 
 function escapeHtml(s){if(!s)return'';return s.replace(/[&<>]/g,function(m){return m==='&'?'&amp;':m==='<'?'&lt;':m==='>'?'&gt;':m;});}
@@ -149,7 +142,7 @@ async function renderVerifyInterface(id){
                 <div class="verify-card">
                     <h3 style="color:#c62828;">❌ MÃ KHÔNG HỢP LỆ</h3>
                     <p>Mã định danh này không tồn tại trên hệ thống.</p>
-                    <button class="btn-orange" onclick="closeWindow()" style="width:100%;padding:12px;font-size:14px;">Thoát hệ thống</button>
+                    <button class="btn-orange" onclick="backToScanner()" style="width:100%;padding:12px;font-size:14px;">Quay lại màn hình chính</button>
                 </div>`;
             return;
         }
@@ -158,7 +151,7 @@ async function renderVerifyInterface(id){
         let today = getTodayStr();
         let received = await get(child(ref(db), 'received/'+id+'/'+today));
         
-        // TRƯỜNG HỢP ĐÃ ĐIỂM DANH / NHẬN QUÀ TRƯỚC ĐÓ -> THOÁT THẲNG
+        // TRƯỜNG HỢP ĐÃ ĐIỂM DANH -> BẤM ĐỂ QUAY LẠI QUÉT TIẾP KHÔNG ĐỘ TRỄ
         if(received.exists()){
             div.innerHTML = `
                 <div class="verify-card">
@@ -167,7 +160,7 @@ async function renderVerifyInterface(id){
                     <div style="background:#fff3e0;padding:12px;border-radius:8px;margin-bottom:20px;font-size:13px;color:#e65100;">
                         Quà đã được phát vào lúc: <b>${received.val().time}</b> hôm nay.
                     </div>
-                    <button class="btn-orange" onclick="closeWindow()" style="width:100%;padding:12px;font-size:14px;">Đóng & Thoát hẳn</button>
+                    <button class="btn-orange" onclick="backToScanner()" style="width:100%;padding:12px;font-size:14px;">Tiếp tục quét mã mới</button>
                 </div>`;
             return;
         }
@@ -201,7 +194,7 @@ async function renderVerifyInterface(id){
                 <div class="verify-card">
                     <h3 style="color:#2e7d32;">✅ NHẬN QUÀ THÀNH CÔNG</h3>
                     <p>Hệ thống đã ghi nhận điểm danh thành công lúc ${formatTime(now)}.</p>
-                    <button class="btn-green" onclick="closeWindow()" style="width:100%;padding:12px;font-size:14px;">Xác nhận thoát hẳn</button>
+                    <button class="btn-green" onclick="backToScanner()" style="width:100%;padding:12px;font-size:14px;">Xong (Quét người tiếp theo)</button>
                 </div>`;
         };
 
@@ -296,7 +289,7 @@ async function exportExcelWithQR(){
         link.download = `DANH_SACH_CO_ANH_QR_${getTodayStr()}.xlsx`;
         link.click();
         
-        alert(`✅ Đã xuất thành công file Excel chứa hình ảnh QR cho ${allRecipients.length} người!`);
+        alert(`✅ Đã xuất thành công file Excel chứa hình ảnh QR for ${allRecipients.length} người!`);
     }catch(e){ 
         alert('Lỗi xuất dữ liệu: ' + e.message); 
     } finally{ 
