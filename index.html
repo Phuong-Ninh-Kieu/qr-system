@@ -52,7 +52,7 @@ td{border:1px solid #eee;padding:8px;text-align:center;}
 
 <div class="header">
     <h1>🏛️ ĐIỂM DANH NHẬN QUÀ</h1>
-    <p>Ủy ban nhân dân phường1</p>
+    <p>Ủy ban nhân dân1</p>
 </div>
 
 <div id="hiddenQrEngine"></div>
@@ -77,7 +77,7 @@ td{border:1px solid #eee;padding:8px;text-align:center;}
         <button onclick="printQR()" style="width:100%;margin-top:10px;">🖨️ In mẫu lẻ</button>
     </div>
 </div>
-<div class="footer admin-content">Hệ thống điểm danh nhận quà</div>
+<div class="footer admin-content">Hệ thống điểm danh nhận quà | <a href="#" onclick="logout(); return false;" style="color: #fff; text-decoration: underline;">Đăng xuất cán bộ</a></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -102,15 +102,20 @@ const db = getDatabase(app);
 
 let allRecipients = [];
 let currentQR = null;
-let isAdmin = false;
 const ADMIN_PASSWORD = "ubnd2024";
 
 // ==========================================
-// HÀM QUAY LẠI MÀN HÌNH CHÍNH ĐỂ QUÉT TIẾP
+// LUỒNG ĐIỀU HƯỚNG QUAY LẠI MÀN HÌNH QUẢN TRỊ ĐỂ QUÉT TIẾP
 // ==========================================
 window.backToScanner = function() {
-    // Điều hướng trang về địa chỉ gốc (bỏ đi đoạn ?id=...) để sẵn sàng quét người tiếp theo
+    // Trở về địa chỉ gốc (bỏ đi đoạn ?id=...), do đã lưu cấu hình đăng nhập nên trang sẽ tự động vào màn hình quét
     window.location.href = window.location.href.split('?')[0];
+};
+
+// Đăng xuất khi cán bộ muốn đổi thiết bị hoặc bàn giao máy
+window.logout = function() {
+    localStorage.removeItem('isAdminLoggedIn');
+    window.location.reload();
 };
 
 function escapeHtml(s){if(!s)return'';return s.replace(/[&<>]/g,function(m){return m==='&'?'&amp;':m==='<'?'&lt;':m==='>'?'&gt;':m;});}
@@ -151,7 +156,7 @@ async function renderVerifyInterface(id){
         let today = getTodayStr();
         let received = await get(child(ref(db), 'received/'+id+'/'+today));
         
-        // TRƯỜNG HỢP ĐÃ ĐIỂM DANH -> BẤM ĐỂ QUAY LẠI QUÉT TIẾP KHÔNG ĐỘ TRỄ
+        // TRƯỜNG HỢP ĐÃ ĐIỂM DANH -> CHUYỂN NGAY VỀ MÀN HÌNH CHỜ QUÉT
         if(received.exists()){
             div.innerHTML = `
                 <div class="verify-card">
@@ -289,7 +294,7 @@ async function exportExcelWithQR(){
         link.download = `DANH_SACH_CO_ANH_QR_${getTodayStr()}.xlsx`;
         link.click();
         
-        alert(`✅ Đã xuất thành công file Excel chứa hình ảnh QR for ${allRecipients.length} người!`);
+        alert(`✅ Đã xuất thành công file Excel chứa hình ảnh QR cho ${allRecipients.length} người!`);
     }catch(e){ 
         alert('Lỗi xuất dữ liệu: ' + e.message); 
     } finally{ 
@@ -570,22 +575,37 @@ function filterTable(){
 function login(){
     let pwd = document.getElementById('adminPassword').value;
     if(pwd === ADMIN_PASSWORD){
-        isAdmin=true;
-        document.getElementById('loginPanel').style.display='none';
-        document.getElementById('adminPanel').style.display='block';
-        document.querySelectorAll('.admin-content').forEach(el=>el.style.display='block');
-        renderAdmin();
+        // Lưu lại cấu hình đăng nhập vĩnh viễn trên thiết bị này
+        localStorage.setItem('isAdminLoggedIn', 'true');
+        showAdminInterface();
     }else{
         document.getElementById('loginError').style.display='block';
     }
 }
 
-// ĐIỀU HƯỚNG HOẠT ĐỘNG BAN ĐẦU
-let verifying = await checkVerification();
-if(!verifying){
-    document.getElementById('loginBtn').onclick = login;
-    document.getElementById('adminPassword').onkeypress = e => { if(e.key==='Enter') login(); };
+function showAdminInterface() {
+    document.getElementById('loginPanel').style.display='none';
+    document.getElementById('adminPanel').style.display='block';
+    document.querySelectorAll('.admin-content').forEach(el=>el.style.display='block');
+    renderAdmin();
 }
+
+// KHỞI ĐỘNG HỆ THỐNG
+async function initSystem() {
+    let verifying = await checkVerification();
+    if(!verifying){
+        // Kiểm tra xem trước đó cán bộ đã đăng nhập thành công hay chưa
+        if(localStorage.getItem('isAdminLoggedIn') === 'true') {
+            showAdminInterface();
+        } else {
+            document.getElementById('loginBtn').onclick = login;
+            document.getElementById('adminPassword').onkeypress = e => { if(e.key==='Enter') login(); };
+        }
+    }
+}
+
+// Chạy khởi tạo hệ thống
+initSystem();
 </script>
 </body>
 </html>
