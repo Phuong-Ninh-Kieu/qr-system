@@ -52,14 +52,14 @@ td{border:1px solid #eee;padding:8px;text-align:center;}
 
 <div class="header">
     <h1>🏛️ ĐIỂM DANH NHẬN QUÀ</h1>
-    <p>UBNTTQ</p>
+    <p>UBNTTQVN</p>
 </div>
 
 <div id="hiddenQrEngine"></div>
 
 <div id="loginPanel" class="container">
     <div class="login-form">
-        <h2>🔐 ĐĂNG NHẬN</h2>
+        <h2>🔐 ĐĂNG NHẬP</h2>
         <input type="password" id="adminPassword" placeholder="Mật khẩu quản trị">
         <button id="loginBtn" style="width:100%;">Đăng nhập</button>
         <div id="loginError" style="color:#c62828;margin-top:10px;text-align:center;display:none;">❌ Sai mật khẩu</div>
@@ -104,7 +104,6 @@ let allRecipients = [];
 let currentQR = null;
 const ADMIN_PASSWORD = "ubnd2024";
 
-// Luồng quay lại màn hình chính phục vụ lượt quét tiếp theo
 window.backToScanner = function() {
     window.location.href = window.location.href.split('?')[0];
 };
@@ -132,7 +131,6 @@ function getTodayStr(){return new Date().toISOString().split('T')[0];}
 function getBaseUrl(){return window.location.href.split('?')[0];}
 function randomId(){return 'HD' + Date.now() + Math.floor(Math.random()*10000);}
 
-// XỬ LÝ QUÉT MÃ QR KHÔNG QUA ĐĂNG NHẬP
 async function checkVerification(){
     let id = new URLSearchParams(location.search).get('id');
     if(id){
@@ -278,7 +276,7 @@ async function exportExcelWithQR(){
 function exportBasicExcel(){
     if(allRecipients.length===0){ alert('Chưa có dữ liệu'); return; }
     let data = allRecipients.map((r,i)=>({
-        'STT': r.stt||i+1, 'HỌ VÀ TÊN': r.hoTen, 'ĐỊA CHỈ': r.diaChi,
+        'STT': r.stt||i+1, 'HỌ TÊN': r.hoTen, 'ĐỊA CHỈ': r.diaChi,
         'DIỆN': r.thuocDien||'', 'KHU VỰC': r.khuVuc||'', 'GHI CHÚ': r.ghiChu||'',
         'TRẠNG THÁI': r.received?'Đã nhận':'Chưa nhận', 'GIỜ NHẬN': r.receivedTime||'---'
     }));
@@ -374,12 +372,18 @@ async function deleteToday(){
                 if(snap.val()[uid][today]) await remove(ref(db, 'received/'+uid+'/'+today));
             }
         }
+        // Cập nhật lại trạng thái received trong recipients
+        let recipientsSnap = await get(child(ref(db), 'recipients'));
+        if(recipientsSnap.exists()){
+            for(let id in recipientsSnap.val()){
+                await update(ref(db, 'recipients/'+id), { received: false, receivedTime: null });
+            }
+        }
         alert('Đã xóa dữ liệu hôm nay');
         await loadData();
     }
 }
 
-// KHỞI TẠO BẢNG ĐIỀU KHIỂN QUẢN TRỊ
 async function renderAdmin(){
     document.getElementById('adminPanel').innerHTML = `
         <div class="card"><h2>📊 THỐNG KÊ HÔM NAY</h2><div class="dashboard">
@@ -413,7 +417,7 @@ async function renderAdmin(){
                 <select id="statusFilter"><option value="all">Tất cả trạng thái</option><option value="received">Đã nhận</option><option value="not">Chưa nhận</option></select>
                 <select id="areaFilter"><option value="all">Tất cả khu vực</option></select>
             </div>
-            <div class="table-container"><table><thead><tr><th>STT</th><th>HỌ VÀ TÊN</th><th>ĐỊA CHỈ</th><th>DIỆN</th><th>KHU VỰC</th><th>TRẠNG THÁI</th><th>XEM QR</th></tr></thead><tbody id="tableBody"></tbody></table></div>
+            <div class="table-container"><table><thead><tr><th>STT</th><th>HỌ TÊN</th><th>ĐỊA CHỈ</th><th>DIỆN</th><th>KHU VỰC</th><th>TRẠNG THÁI</th><th>XEM QR</th></tr></thead><tbody id="tableBody"></tbody></table></div>
         </div>
     `;
     
@@ -432,6 +436,7 @@ async function renderAdmin(){
     await loadData();
 }
 
+// HÀM IMPORT ĐÃ ĐƯỢC SỬA - KHỚP VỚI FILE MẪU
 async function importExcel(){
     let file = document.getElementById('excelFile').files[0];
     if(!file){ alert('Vui lòng chọn tệp tin Excel!'); return; }
@@ -439,37 +444,103 @@ async function importExcel(){
     reader.onload = async function(e){
         let wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
         let sheet = wb.Sheets[wb.SheetNames[0]];
-        let json = XLSX.utils.sheet_to_json(sheet);
-        let success=0;
-        for(let item of json){
-            let keys = Object.keys(item);
-            let hoTen = '', diaChi = '', thuocDien='', khuVuc='', ghiChu='', stt='';
-            for(let k of keys){
-                let low = k.toLowerCase().trim();
-                if(low.includes('tên')||low.includes('họ')) hoTen = item[k];
-                if(low.includes('địa chỉ')||low.includes('địa')) diaChi = item[k];
-                if(low.includes('diện')) thuocDien = item[k];
-                if(low.includes('khu vực')||low.includes('khu')) khuVuc = item[k];
-                if(low.includes('ghi chú')) ghiChu = item[k];
-                if(low.includes('stt')) stt = item[k];
+        let json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        
+        if(!json || json.length < 2){
+            alert('File Excel không có dữ liệu hoặc không đúng định dạng!');
+            return;
+        }
+        
+        // Lấy header dòng đầu tiên
+        let headers = json[0];
+        // Tìm vị trí các cột cần thiết (không phân biệt hoa/thường, dấu cách)
+        let colIndex = {
+            stt: -1,
+            hoTen: -1,
+            diaChi: -1,
+            thuocDien: -1,
+            khuVuc: -1,
+            ghiChu: -1
+        };
+        
+        headers.forEach((h, idx) => {
+            if(!h) return;
+            let lowerH = String(h).toLowerCase().trim();
+            // Loại bỏ dấu cách và dấu câu để so sánh linh hoạt
+            let normalized = lowerH.replace(/[_\s\u00A0]+/g, '').replace(/[.,;:!?]/g, '');
+            
+            if(normalized.includes('stt') || normalized === 'stt') colIndex.stt = idx;
+            else if(normalized.includes('họ') && normalized.includes('tên')) colIndex.hoTen = idx;
+            else if(normalized.includes('họtên')) colIndex.hoTen = idx;
+            else if(normalized.includes('địa') && normalized.includes('chỉ')) colIndex.diaChi = idx;
+            else if(normalized.includes('địachỉ')) colIndex.diaChi = idx;
+            else if(normalized.includes('thuộc') && normalized.includes('diện')) colIndex.thuocDien = idx;
+            else if(normalized.includes('thuộcdiện')) colIndex.thuocDien = idx;
+            else if(normalized.includes('khu') && normalized.includes('vực')) colIndex.khuVuc = idx;
+            else if(normalized.includes('khuvực')) colIndex.khuVuc = idx;
+            else if(normalized.includes('ghi') && normalized.includes('chú')) colIndex.ghiChu = idx;
+            else if(normalized.includes('ghichú')) colIndex.ghiChu = idx;
+        });
+        
+        // Kiểm tra các cột bắt buộc
+        if(colIndex.hoTen === -1 || colIndex.diaChi === -1){
+            alert('File Excel thiếu cột bắt buộc: "HỌ VÀ TÊN" hoặc "ĐỊA CHỈ". Vui lòng dùng file mẫu!');
+            return;
+        }
+        
+        let success = 0;
+        let errors = [];
+        
+        for(let i = 1; i < json.length; i++){
+            let row = json[i];
+            if(!row || row.length === 0) continue;
+            
+            let hoTen = colIndex.hoTen !== -1 ? (row[colIndex.hoTen] || '').toString().trim() : '';
+            let diaChi = colIndex.diaChi !== -1 ? (row[colIndex.diaChi] || '').toString().trim() : '';
+            
+            if(!hoTen || !diaChi){
+                errors.push(`Dòng ${i+1}: thiếu họ tên hoặc địa chỉ`);
+                continue;
             }
-            if(!hoTen || !diaChi) continue;
+            
+            let stt = colIndex.stt !== -1 ? (row[colIndex.stt] || '').toString().trim() : '';
+            let thuocDien = colIndex.thuocDien !== -1 ? (row[colIndex.thuocDien] || '').toString().trim() : '';
+            let khuVuc = colIndex.khuVuc !== -1 ? (row[colIndex.khuVuc] || '').toString().trim() : '';
+            let ghiChu = colIndex.ghiChu !== -1 ? (row[colIndex.ghiChu] || '').toString().trim() : '';
+            
             let id = randomId();
             let qrUrl = getBaseUrl() + '?id=' + id;
             await set(ref(db, 'recipients/'+id), {
-                id, stt: stt||'', hoTen, diaChi, thuocDien: thuocDien||'', khuVuc: khuVuc||'', ghiChu: ghiChu||'',
-                qrUrl, received: false, createdAt: new Date().toISOString()
+                id, 
+                stt: stt || '', 
+                hoTen, 
+                diaChi, 
+                thuocDien: thuocDien || '', 
+                khuVuc: khuVuc || '', 
+                ghiChu: ghiChu || '',
+                qrUrl, 
+                received: false, 
+                createdAt: new Date().toISOString()
             });
             success++;
         }
-        alert(`✅ Import thành công ${success} người vào hệ thống!`);
+        
+        if(errors.length > 0){
+            alert(`✅ Import thành công ${success} người!\n⚠️ Có ${errors.length} lỗi:\n${errors.slice(0,5).join('\n')}${errors.length > 5 ? '\n...' : ''}`);
+        } else {
+            alert(`✅ Import thành công ${success} người vào hệ thống!`);
+        }
         await loadData();
     };
     reader.readAsArrayBuffer(file);
 }
 
 function downloadSample(){
-    let data = [{STT:1,"HỌ VÀ TÊN":"Nguyễn Văn A","ĐỊA CHỈ":"Số 1 Đường Lê Lợi","THUỘC DIỆN":"Hộ nghèo","KHU VỰC":"Tổ 1","GHI CHÚ":""}];
+    // Tạo file mẫu đúng định dạng
+    let data = [
+        { "STT": 1, "HỌ VÀ TÊN": "Nguyễn Văn A", "ĐỊA CHỈ": "Số 1 Đường Lê Lợi", "THUỘC DIỆN": "Hộ nghèo", "KHU VỰC": "Tổ 1", "GHI CHÚ": "" },
+        { "STT": 2, "HỌ VÀ TÊN": "Trần Thị B", "ĐỊA CHỈ": "Số 2 Đường Nguyễn Huệ", "THUỘC DIỆN": "Khó khăn", "KHU VỰC": "Tổ 2", "GHI CHÚ": "" }
+    ];
     let ws = XLSX.utils.json_to_sheet(data);
     let wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Mau');
@@ -483,7 +554,7 @@ async function loadData(){
     let receivedToday = {};
     if(recSnap.exists()){
         for(let uid in recSnap.val()){
-            if(recSnap.val()[uid][today]) receivedToday[uid] = recSnap.val()[uid][today];
+            if(recSnap.val()[uid] && recSnap.val()[uid][today]) receivedToday[uid] = recSnap.val()[uid][today];
         }
     }
     allRecipients = [];
@@ -492,25 +563,41 @@ async function loadData(){
         for(let id in snap.val()){
             let r = snap.val()[id];
             total++;
-            let isRec = receivedToday[id]?true:false;
+            let isRec = receivedToday[id] ? true : false;
             if(isRec) recCount++;
-            if(r.khuVuc) areas.add(r.khuVuc);
+            if(r.khuVuc && r.khuVuc.trim()) areas.add(r.khuVuc.trim());
             allRecipients.push({
-                id, stt: r.stt, hoTen: r.hoTen, diaChi: r.diaChi,
-                thuocDien: r.thuocDien||'', khuVuc: r.khuVuc||'', ghiChu: r.ghiChu||'',
-                received: isRec, receivedTime: receivedToday[id]?.time||null, qrUrl: r.qrUrl
+                id, 
+                stt: r.stt || '', 
+                hoTen: r.hoTen, 
+                diaChi: r.diaChi,
+                thuocDien: r.thuocDien || '', 
+                khuVuc: r.khuVuc || '', 
+                ghiChu: r.ghiChu || '',
+                received: isRec, 
+                receivedTime: receivedToday[id]?.time || null, 
+                qrUrl: r.qrUrl
             });
         }
     }
+    
+    // Sắp xếp theo STT nếu có
+    allRecipients.sort((a,b) => {
+        let sttA = parseInt(a.stt) || 0;
+        let sttB = parseInt(b.stt) || 0;
+        return sttA - sttB;
+    });
+    
     let areaSelect = document.getElementById('areaFilter');
     if(areaSelect){
         let val = areaSelect.value;
-        areaSelect.innerHTML = '<option value="all">Tất cả KV</option>';
-        [...areas].sort().forEach(a=>{ if(a) areaSelect.innerHTML += `<option value="${a}">${a}</option>`; });
-        if(val && areaSelect.querySelector(`option[value="${val}"]`)) areaSelect.value=val;
+        areaSelect.innerHTML = '<option value="all">Tất cả khu vực</option>';
+        [...areas].sort().forEach(a=>{ 
+            if(a && a.trim()) areaSelect.innerHTML += `<option value="${a.replace(/"/g, '&quot;')}">${a}</option>`; 
+        });
+        if(val && areaSelect.querySelector(`option[value="${val.replace(/"/g, '&quot;')}"]`)) areaSelect.value=val;
     }
     
-    // Gán dữ liệu lên giao diện
     if(document.getElementById('total')) document.getElementById('total').innerText = total;
     if(document.getElementById('received')) document.getElementById('received').innerText = recCount;
     if(document.getElementById('notReceived')) document.getElementById('notReceived').innerText = total-recCount;
@@ -528,22 +615,22 @@ function filterTable(){
     let area = document.getElementById('areaFilter').value;
     
     let filtered = allRecipients.filter(r => {
-        let match = r.hoTen.toLowerCase().includes(search) || r.diaChi.toLowerCase().includes(search);
+        let match = (r.hoTen || '').toLowerCase().includes(search) || (r.diaChi || '').toLowerCase().includes(search);
         let matchStatus = status==='all' || (status==='received' && r.received) || (status==='not' && !r.received);
-        let matchArea = area==='all' || r.khuVuc===area;
+        let matchArea = area==='all' || (r.khuVuc || '') === area;
         return match && matchStatus && matchArea;
     });
     
     if(filtered.length===0){ tbody.innerHTML='<tr><td colspan="7">📭 Không tìm thấy kết quả phù hợp</td></tr>'; return; }
     tbody.innerHTML = '';
     filtered.forEach((r,i)=>{
-        let statusHtml = r.received ? `<span class="badge-success">✅ Đã nhận<br>${r.receivedTime}</span>` : `<span class="badge-warning">⏳ Chưa nhận</span>`;
+        let statusHtml = r.received ? `<span class="badge-success">✅ Đã nhận<br>${r.receivedTime || ''}</span>` : `<span class="badge-warning">⏳ Chưa nhận</span>`;
         tbody.innerHTML += `<tr>
-            <td>${r.stt||i+1}</td>
+            <td>${r.stt || (i+1)}</td>
             <td style="text-align:left; font-weight:500;">${escapeHtml(r.hoTen)}</td>
             <td style="text-align:left">${escapeHtml(r.diaChi)}</td>
-            <td>${escapeHtml(r.thuocDien)||'---'}</td>
-            <td>${escapeHtml(r.khuVuc)||'---'}</td>
+            <td>${escapeHtml(r.thuocDien) || '---'}</td>
+            <td>${escapeHtml(r.khuVuc) || '---'}</td>
             <td>${statusHtml}</td>
             <td><button class="view-qr" data-id="${r.id}" style="background:#2196f3;padding:4px 10px;">🔲 QR</button></td>
         </tr>`;
@@ -568,14 +655,11 @@ function showAdminInterface() {
     renderAdmin();
 }
 
-// HÀM ĐIỀU HƯỚNG HOẠT ĐỘNG KHỞI TẠO CHUẨN
 async function initSystem() {
     let verifying = await checkVerification();
     if(!verifying){
-        // CHỦ ĐỘNG NẠP TRƯỚC DỮ LIỆU TỪ FIREBASE VỀ NỀN
         await loadData();
         
-        // Kiểm tra phiên đăng nhập cũ
         if(localStorage.getItem('isAdminLoggedIn') === 'true') {
             showAdminInterface();
         } else {
@@ -585,7 +669,6 @@ async function initSystem() {
     }
 }
 
-// Bắt đầu chạy hệ thống
 initSystem();
 </script>
 </body>
