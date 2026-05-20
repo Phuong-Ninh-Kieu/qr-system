@@ -34,9 +34,9 @@ td{border:1px solid #eee;padding:8px;text-align:center;}
 .search-box{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
 .search-box input{flex:2;min-width:150px;}
 .search-box select{width:120px;}
-.verify-card{max-width:400px;margin:40px auto;background:#fff;border-radius:20px;text-align:center;padding:30px;box-shadow:0 4px 15px rgba(0,0,0,0.15);}
-.verify-card h3{margin-bottom:15px;font-size:18px;}
-.verify-card p{font-size:14px;color:#555;margin-bottom:20px;line-height:1.5;}
+.verify-card{max-width:500px;margin:10px auto;background:#fff;border-radius:20px;text-align:center;padding:20px;box-shadow:0 4px 15px rgba(0,0,0,0.15);}
+.verify-card h3{margin-bottom:12px;font-size:18px;}
+.verify-card p{font-size:14px;color:#555;margin-bottom:15px;line-height:1.5;}
 .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:1000;justify-content:center;align-items:center;}
 .modal-content{background:#fff;border-radius:20px;padding:20px;max-width:350px;width:90%;text-align:center;}
 .login-form{max-width:350px;margin:50px auto;background:#fff;border-radius:20px;padding:25px;}
@@ -46,28 +46,37 @@ td{border:1px solid #eee;padding:8px;text-align:center;}
 .admin-content{display:none;}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
 #hiddenQrEngine { position: absolute; top: -9999px; left: -9999px; visibility: hidden; }
+/* CSS mới cho phần Camera */
+#reader { width: 100%; max-width: 450px; margin: 0 auto; border: 2px dashed #b00000; border-radius: 12px; overflow: hidden; background: #000; }
 </style>
 </head>
 <body>
 
 <div class="header">
     <h1>🏛️ ĐIỂM DANH NHẬN QUÀ</h1>
-    <p>UBNTTQ</p>
+    <p>UBNTTQVN</p>
 </div>
 
 <div id="hiddenQrEngine"></div>
 
 <div id="loginPanel" class="container">
     <div class="login-form">
-        <h2>🔐 ĐĂNG NHẬP</h2>
+        <h2>🔐 ĐĂNG NHẬP CÁN BỘ</h2>
         <input type="password" id="adminPassword" placeholder="Mật khẩu quản trị">
         <button id="loginBtn" style="width:100%;">Đăng nhập</button>
         <div id="loginError" style="color:#c62828;margin-top:10px;text-align:center;display:none;">❌ Sai mật khẩu</div>
     </div>
 </div>
 
-<div id="adminPanel" class="container admin-content"></div>
-<div id="verifyPanel" style="display:none;"></div>
+<div id="adminPanel" class="container admin-content">
+    <div class="card">
+        <h2>📷 MÁY QUÉT ĐIỂM DANH TRỰC TIẾP</h2>
+        <div id="reader"></div>
+        <div id="scannerFeedback" style="margin-top:10px; text-align:center; font-weight:bold;"></div>
+        <div id="quickVerifyResult"></div> </div>
+    
+    <div id="adminStatsPlaceholder"></div>
+</div>
 
 <div id="qrModal" class="modal">
     <div class="modal-content">
@@ -77,11 +86,13 @@ td{border:1px solid #eee;padding:8px;text-align:center;}
         <button onclick="printQR()" style="width:100%;margin-top:10px;">🖨️ In mẫu lẻ</button>
     </div>
 </div>
+
 <div class="footer admin-content">Hệ thống điểm danh nhận quà | <a href="#" onclick="logout(); return false;" style="color: #b00000; text-decoration: underline; font-weight: bold;">Đăng xuất cán bộ</a></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -102,26 +113,15 @@ const db = getDatabase(app);
 
 let allRecipients = [];
 let currentQR = null;
+let html5QrcodeScanner = null;
 const ADMIN_PASSWORD = "ubnd2024";
-
-window.backToScanner = function() {
-    window.location.href = window.location.href.split('?')[0];
-};
 
 window.logout = function() {
     localStorage.removeItem('isAdminLoggedIn');
+    if(html5QrcodeScanner) {
+        html5QrcodeScanner.clear();
+    }
     window.location.reload();
-};
-
-window.closeWindow = function() {
-    window.open('', '_self', '');
-    window.close();
-    setTimeout(() => {
-        document.body.innerHTML = `<div style="text-align:center;padding:50px;font-family:sans-serif;">
-            <h2 style="color:#2e7d32;">Thao tác hoàn tất!</h2>
-            <p style="color:#555;margin-top:10px;">Bạn có thể đóng hoặc thoát ứng dụng an toàn.</p>
-        </div>`;
-    }, 200);
 };
 
 function escapeHtml(s){if(!s)return'';return s.replace(/[&<>]/g,function(m){return m==='&'?'&amp;':m==='<'?'&lt;':m==='>'?'&gt;':m;});}
@@ -131,64 +131,107 @@ function getTodayStr(){return new Date().toISOString().split('T')[0];}
 function getBaseUrl(){return window.location.href.split('?')[0];}
 function randomId(){return 'HD' + Date.now() + Math.floor(Math.random()*10000);}
 
-async function checkVerification(){
-    let id = new URLSearchParams(location.search).get('id');
-    if(id){
-        document.getElementById('loginPanel').style.display = 'none';
-        if(document.getElementById('adminPanel')) document.getElementById('adminPanel').style.display = 'none';
-        document.getElementById('verifyPanel').style.display = 'block';
-        await renderVerifyInterface(id);
-        return true;
-    }
-    return false;
+// Khởi chạy Camera quét mã QR chuyên dụng
+function startScanner() {
+    html5QrcodeScanner = new Html5Qrcode("reader");
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    
+    html5QrcodeScanner.start(
+        { facingMode: "environment" }, // Ưu tiên sử dụng camera sau của điện thoại
+        config,
+        onScanSuccess,
+        onScanFailure
+    ).catch(err => {
+        document.getElementById('scannerFeedback').innerHTML = `<span style="color:red;">⚠️ Không mở được Camera: ${err}</span>`;
+    });
 }
 
-async function renderVerifyInterface(id){
-    let div = document.getElementById('verifyPanel');
-    try{
-        let snap = await get(child(ref(db), 'recipients/'+id));
+// Xử lý khi camera quét trúng mã QR
+async function onScanSuccess(decodedText) {
+    try {
+        let urlParams = new URLSearchParams(decodedText.split('?')[1]);
+        let id = urlParams.get('id');
+        
+        if(!id) {
+            // Trường hợp quét trúng chuỗi text thuần không chứa URL
+            id = decodedText.trim();
+        }
+        
+        document.getElementById('scannerFeedback').innerHTML = "⏳ Đang kiểm tra mã...";
+        
+        // Tạm dừng camera để xử lý dữ liệu tránh quét lặp liên tục
+        if (html5QrcodeScanner) { await html5QrcodeScanner.pause(true); }
+        
+        await handleAdminCheckIn(id);
+        
+    } catch (e) {
+        document.getElementById('scannerFeedback').innerHTML = "❌ Lỗi xử lý mã dữ liệu.";
+        if (html5QrcodeScanner) html5QrcodeScanner.resume();
+    }
+}
+
+function onScanFailure(error) {
+    // Không cần log ra màn hình tránh gây rối mắt
+}
+
+// Xử lý logic Điểm danh/Nhận quà trực tiếp trong màn hình quản trị
+async function handleAdminCheckIn(id) {
+    let container = document.getElementById('quickVerifyResult');
+    let feedback = document.getElementById('scannerFeedback');
+    let today = getTodayStr();
+    
+    try {
+        let snap = await get(child(ref(db), 'recipients/' + id));
         if(!snap.exists()){
-            div.innerHTML = `
-                <div class="verify-card">
+            container.innerHTML = `
+                <div class="verify-card" style="border: 2px solid #c62828;">
                     <h3 style="color:#c62828;">❌ MÃ KHÔNG HỢP LỆ</h3>
-                    <p>Mã định danh này không tồn tại trên hệ thống dữ liệu hoặc đã bị gỡ bỏ.</p>
-                    <button class="btn-orange" onclick="backToScanner()" style="width:100%;padding:12px;">Quay lại màn hình chính</button>
+                    <p>Người này không tồn tại trên hệ thống dữ liệu.</p>
+                    <button class="btn-orange" id="btnResumeScan">Quét tiếp tục</button>
                 </div>`;
+            feedback.innerHTML = "";
+            document.getElementById('btnResumeScan').onclick = () => resumeCamera();
             return;
         }
         
         let data = snap.val();
-        let today = getTodayStr();
-        let received = await get(child(ref(db), 'received/'+id+'/'+today));
+        let received = await get(child(ref(db), 'received/' + id + '/' + today));
         
         if(received.exists()){
-            div.innerHTML = `
-                <div class="verify-card">
+            container.innerHTML = `
+                <div class="verify-card" style="border: 2px solid #ff9800;">
                     <h3 style="color:#ff9800;">⚠️ ĐÃ NHẬN QUÀ RỒI</h3>
                     <p>Danh tính: <strong>${escapeHtml(data.hoTen)}</strong><br>Địa chỉ: ${escapeHtml(data.diaChi)}</p>
-                    <div style="background:#fff3e0;padding:12px;border-radius:8px;margin-bottom:20px;font-size:13px;color:#e65100;">
-                        Quà đã được phát vào lúc: <b>${received.val().time}</b> ngày hôm nay.
+                    <div style="background:#fff3e0;padding:10px;border-radius:8px;margin-bottom:10px;font-size:13px;color:#e65100;">
+                        Đã phát lúc: <b>${received.val().time}</b> hôm nay.
                     </div>
-                    <button class="btn-orange" onclick="backToScanner()" style="width:100%;padding:12px;">Tiếp tục quét mã mới</button>
+                    <button class="btn-orange" id="btnResumeScan" style="width:100%;">Quét tiếp người khác</button>
                 </div>`;
+            feedback.innerHTML = "";
+            document.getElementById('btnResumeScan').onclick = () => resumeCamera();
             return;
         }
         
-        div.innerHTML = `
-            <div class="verify-card">
+        // Hiển thị thông tin và nút xác nhận cho Admin bấm
+        container.innerHTML = `
+            <div class="verify-card" style="border: 2px solid #2e7d32; background:#f9fff9;">
                 <h3 style="color:#2e7d32;">📋 THÔNG TIN ĐIỂM DANH</h3>
-                <p style="text-align:left;background:#f5f5f5;padding:15px;border-radius:8px;">
+                <p style="text-align:left;background:#fff;padding:12px;border-radius:8px;border:1px solid #ddd;">
                     • <b>Họ tên:</b> ${escapeHtml(data.hoTen)}<br>
                     • <b>Địa chỉ:</b> ${escapeHtml(data.diaChi)}<br>
                     • <b>Diện:</b> ${escapeHtml(data.thuocDien || '---')}<br>
                     • <b>Khu vực:</b> ${escapeHtml(data.khuVuc || '---')}
                 </p>
-                <button id="confirmCheckinBtn" class="btn-green" style="width:100%;padding:14px;font-size:15px;margin-top:10px;">✅ Xác Nhận Nhận Quà</button>
+                <button id="btnAdminConfirm" class="btn-green" style="width:100%;padding:14px;font-size:16px;margin-top:10px;">✅ Xác Nhận Cho Nhận Quà</button>
+                <button id="btnCancelScan" class="btn-orange" style="width:100%;background:#777;margin-top:5px;">Hủy bỏ</button>
             </div>`;
-            
-        document.getElementById('confirmCheckinBtn').onclick = async () => {
-            let btn = document.getElementById('confirmCheckinBtn');
-            btn.innerHTML = "⏳ Đang ghi dữ liệu...";
+        feedback.innerHTML = "✨ Đã tìm thấy thông tin!";
+        
+        document.getElementById('btnCancelScan').onclick = () => resumeCamera();
+        
+        document.getElementById('btnAdminConfirm').onclick = async () => {
+            let btn = document.getElementById('btnAdminConfirm');
+            btn.innerHTML = "⏳ Đang ghi nhận...";
             btn.disabled = true;
             
             let now = new Date();
@@ -198,17 +241,29 @@ async function renderVerifyInterface(id){
             });
             await update(ref(db, 'recipients/'+id), { received: true, receivedTime: formatTime(now) });
             
-            div.innerHTML = `
-                <div class="verify-card">
-                    <h3 style="color:#2e7d32;">✅ NHẬN QUÀ THÀNH CÔNG</h3>
-                    <p>Hệ thống đã ghi nhận điểm danh cho ông/bà <b>${escapeHtml(data.hoTen)}</b> vào lúc ${formatTime(now)}.</p>
-                    <button class="btn-green" onclick="backToScanner()" style="width:100%;padding:12px;">Xong (Quét người tiếp theo)</button>
+            container.innerHTML = `
+                <div class="verify-card" style="background:#e8f5e9;">
+                    <h3 style="color:#2e7d32;">✅ THÀNH CÔNG</h3>
+                    <p>Đã duyệt nhận quà cho ông/bà: <br><b>${escapeHtml(data.hoTen)}</b> lúc ${formatTime(now)}.</p>
+                    <button id="btnResumeScan" class="btn-green" style="width:100%;">Tiếp tục quét người mới</button>
                 </div>`;
+            
+            document.getElementById('btnResumeScan').onclick = () => {
+                resumeCamera();
+                loadData(); // Tải lại bảng danh sách ở dưới tự động cập nhật tình hình
+            };
         };
-
-    }catch(e){ 
-        div.innerHTML = `<div class="verify-card"><h3 style="color:#c62828;">❌ LỖI KẾT NỐI</h3><p>${e.message}</p><button onclick="location.reload()">Thử lại</button></div>`; 
+        
+    } catch (e) {
+        container.innerHTML = `<div class="verify-card">❌ Lỗi kết nối máy chủ: ${e.message}</div>`;
+        resumeCamera();
     }
+}
+
+function resumeCamera() {
+    document.getElementById('quickVerifyResult').innerHTML = "";
+    document.getElementById('scannerFeedback').innerHTML = "📷 Đang sẵn sàng chờ quét mã tiếp theo...";
+    if (html5QrcodeScanner) { html5QrcodeScanner.resume(); }
 }
 
 function generateBase64Qr(text) {
@@ -384,7 +439,7 @@ async function deleteToday(){
 }
 
 async function renderAdmin(){
-    document.getElementById('adminPanel').innerHTML = `
+    document.getElementById('adminStatsPlaceholder').innerHTML = `
         <div class="card"><h2>📊 THỐNG KÊ HÔM NAY</h2><div class="dashboard">
             <div class="box"><h3 id="total">0</h3><p>Tổng cơ sở dữ liệu</p></div>
             <div class="box" style="background:#2e7d32;"><h3 id="received">0</h3><p>Đã nhận quà</p></div>
@@ -433,6 +488,7 @@ async function renderAdmin(){
     document.getElementById('areaFilter').onchange = () => filterTable();
     
     await loadData();
+    startScanner(); // Bật camera ngay sau khi dựng xong giao diện quản trị
 }
 
 async function importExcel(){
@@ -450,14 +506,7 @@ async function importExcel(){
         }
         
         let headers = json[0];
-        let colIndex = {
-            stt: -1,
-            hoTen: -1,
-            diaChi: -1,
-            thuocDien: -1,
-            khuVuc: -1,
-            ghiChu: -1
-        };
+        let colIndex = { stt: -1, hoTen: -1, diaChi: -1, thuocDien: -1, khuVuc: -1, ghiChu: -1 };
         
         headers.forEach((h, idx) => {
             if(!h) return;
@@ -505,16 +554,9 @@ async function importExcel(){
             let id = randomId();
             let qrUrl = getBaseUrl() + '?id=' + id;
             await set(ref(db, 'recipients/'+id), {
-                id, 
-                stt: stt || '', 
-                hoTen, 
-                diaChi, 
-                thuocDien: thuocDien || '', 
-                khuVuc: khuVuc || '', 
-                ghiChu: ghiChu || '',
-                qrUrl, 
-                received: false, 
-                createdAt: new Date().toISOString()
+                id, stt: stt || '', hoTen, diaChi, 
+                thuocDien: thuocDien || '', khuVuc: khuVuc || '', ghiChu: ghiChu || '',
+                qrUrl, received: false, createdAt: new Date().toISOString()
             });
             success++;
         }
@@ -560,16 +602,9 @@ async function loadData(){
             if(isRec) recCount++;
             if(r.khuVuc && r.khuVuc.trim()) areas.add(r.khuVuc.trim());
             allRecipients.push({
-                id, 
-                stt: r.stt || '', 
-                hoTen: r.hoTen, 
-                diaChi: r.diaChi,
-                thuocDien: r.thuocDien || '', 
-                khuVuc: r.khuVuc || '', 
-                ghiChu: r.ghiChu || '',
-                received: isRec, 
-                receivedTime: receivedToday[id]?.time || null, 
-                qrUrl: r.qrUrl
+                id, stt: r.stt || '', hoTen: r.hoTen, diaChi: r.diaChi,
+                thuocDien: r.thuocDien || '', khuVuc: r.khuVuc || '', ghiChu: r.ghiChu || '',
+                received: isRec, receivedTime: receivedToday[id]?.time || null, qrUrl: r.qrUrl
             });
         }
     }
@@ -648,19 +683,15 @@ function showAdminInterface() {
 }
 
 async function initSystem() {
-    let verifying = await checkVerification();
-    if(!verifying){
-        // Kiểm tra phiên đăng nhập cũ
-        if(localStorage.getItem('isAdminLoggedIn') === 'true') {
-            showAdminInterface();
-        } else {
-            document.getElementById('loginBtn').onclick = login;
-            document.getElementById('adminPassword').onkeypress = e => { if(e.key==='Enter') login(); };
-            // Đảm bảo ẩn admin panel và hiện login panel
-            document.getElementById('loginPanel').style.display = 'block';
-            document.getElementById('adminPanel').style.display = 'none';
-            document.querySelectorAll('.admin-content').forEach(el=>el.style.display='none');
-        }
+    // Luôn luôn yêu cầu đăng nhập quản trị trước để vận hành camera và quản lý
+    if(localStorage.getItem('isAdminLoggedIn') === 'true') {
+        showAdminInterface();
+    } else {
+        document.getElementById('loginBtn').onclick = login;
+        document.getElementById('adminPassword').onkeypress = e => { if(e.key==='Enter') login(); };
+        document.getElementById('loginPanel').style.display = 'block';
+        document.getElementById('adminPanel').style.display = 'none';
+        document.querySelectorAll('.admin-content').forEach(el=>el.style.display='none');
     }
 }
 
