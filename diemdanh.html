@@ -316,25 +316,34 @@
         }
 
         async function render() {
-            if (!checkAuth()) return;
-            
-            const container = document.getElementById('mainContainer');
-            const urlParams = new URLSearchParams(window.location.search);
-            const mode = urlParams.get('mode');
-            
-            try {
-                if (mode === 'checkin') {
-                    await renderCheckinForm(container);
-                } else if (currentUser.role === 'admin') {
-                    await renderAdminView(container);
-                } else {
-                    await renderUserView(container);
-                }
-            } catch (error) {
-                console.error(error);
-                container.innerHTML = '<div class="loading" style="color:red;">Có lỗi xảy ra: ' + error.message + '</div>';
-            }
+
+    const container = document.getElementById('mainContainer');
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+
+    // Người quét QR không cần đăng nhập
+    if (mode === 'checkin') {
+        document.querySelector('.header').style.display = 'none';
+        await renderCheckinForm(container);
+        return;
+    }
+
+    if (!checkAuth()) return;
+
+    try {
+        if (currentUser.role === 'admin') {
+            await renderAdminView(container);
+        } else {
+            await renderUserView(container);
         }
+    } catch (error) {
+        console.error(error);
+        container.innerHTML =
+            '<div class="loading" style="color:red;">' +
+            error.message +
+            '</div>';
+    }
+}
 
         // Form điểm danh
         async function renderCheckinForm(container) {
@@ -396,7 +405,12 @@
             };
             
             try {
-                await database.ref('checkins/' + checkinId).set(checkinRecord);
+                const urlParams = new URLSearchParams(window.location.search);
+const ownerUser = urlParams.get('user') || 'public';
+
+await database
+.ref('checkins/' + ownerUser + '/' + checkinId)
+.set(checkinRecord);
                 
                 // Hiển thị thông báo dạng Alert của hệ thống để chắc chắn người dùng nhìn thấy
                 alert('🎉 Điểm danh thành công!');
@@ -428,14 +442,32 @@
         async function renderAdminView(container) {
             try {
                 const snapshot = await database.ref('checkins').once('value');
-                const checkins = snapshot.val() || {};
-                const checkinList = Object.values(checkins).sort((a, b) => b.timestamp - a.timestamp);
+const allData = snapshot.val() || {};
+
+let checkinList = [];
+
+Object.keys(allData).forEach(user => {
+
+    Object.values(allData[user]).forEach(item => {
+
+        item.ownerUser = user;
+
+        checkinList.push(item);
+
+    });
+
+});
+
+checkinList.sort((a,b)=>b.timestamp-a.timestamp);
                 
                 const today = new Date().toLocaleDateString('vi-VN');
                 const todayCount = checkinList.filter(c => c.date === today).length;
                 
-                const currentUrl = window.location.href.split('?')[0];
-                const checkinUrl = currentUrl + '?mode=checkin';
+                const checkinUrl =
+window.location.origin +
+window.location.pathname +
+'?mode=checkin&user=' +
+encodeURIComponent(currentUser.username);
                 
                 container.innerHTML = `
                     <div class="card">
@@ -514,7 +546,9 @@
                 <div class="checkin-item" onclick='showDetail("${c.id}")'>
                     <div class="checkin-name">
                         👤 ${c.fullName}
-                        <span class="badge">${c.date}</span>
+<span class="badge">
+${c.ownerUser}
+</span>
                     </div>
                     <div class="checkin-detail">
                         📅 ${c.birthYear} | 🎓 ${c.class} | 👥 ${c.union}
@@ -554,31 +588,75 @@
         };
 
         // User View
-        async function renderUserView(container) {
-            const snapshot = await database.ref('users/' + currentUser.username).once('value');
-            const userData = snapshot.val() || {};
-            
-            const currentUrl = window.location.href.split('?')[0];
-            const checkinUrl = currentUrl + '?mode=checkin';
-            
-            container.innerHTML = `
-                <div class="card">
-                    <h3>👤 Thông Tin Cá Nhân</h3>
-                    <p><strong>Tên đăng nhập:</strong> ${currentUser.username}</p>
-                    <p><strong>Ngày đăng ký:</strong> ${userData.createdAt ? new Date(userData.createdAt).toLocaleString('vi-VN') : 'Chưa rõ'}</p>
-                </div>
-                <div class="card">
-                    <h3>📋 Hướng Dẫn Điểm Danh</h3>
-                    <p>1️⃣ Quét mã QR do admin cung cấp</p>
-                    <p>2️⃣ Hoặc truy cập link: <a href="${checkinUrl}" target="_blank" style="color:#667eea">${checkinUrl}</a></p>
-                    <p>3️⃣ Nhập đầy đủ thông tin</p>
-                    <p>4️⃣ Nhấn "Xác nhận điểm danh"</p>
-                </div>
-            `;
-        }
+       async function renderUserView(container) {
 
+    const snapshot =
+        await database.ref('users/' + currentUser.username).once('value');
+
+    const userData = snapshot.val() || {};
+
+    const checkinUrl =
+        window.location.origin +
+        window.location.pathname +
+        '?mode=checkin&user=' +
+        encodeURIComponent(currentUser.username);
+
+    const checkinsSnapshot =
+        await database.ref('checkins/' + currentUser.username).once('value');
+
+    const totalCheckins =
+        checkinsSnapshot.exists()
+            ? Object.keys(checkinsSnapshot.val()).length
+            : 0;
+
+    container.innerHTML = `
+        <div class="card">
+            <h3>📱 QR Điểm Danh Của Tôi</h3>
+
+            <div class="qr-box">
+                <div id="userQr"></div>
+
+                <p style="margin-top:15px;word-break:break-all">
+                    ${checkinUrl}
+                </p>
+
+                <button class="btn-copy" id="copyMyLink">
+                    📋 Sao chép Link
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>👤 Thông Tin Cá Nhân</h3>
+
+            <p><strong>Tên đăng nhập:</strong>
+            ${currentUser.username}</p>
+
+            <p><strong>Ngày đăng ký:</strong>
+            ${userData.createdAt
+                ? new Date(userData.createdAt).toLocaleString('vi-VN')
+                : 'Chưa rõ'}
+            </p>
+
+            <p><strong>Số lượt điểm danh:</strong>
+            ${totalCheckins}
+            </p>
+        </div>
+    `;
+
+    new QRCode(document.getElementById("userQr"), {
+        text: checkinUrl,
+        width: 250,
+        height: 250
+    });
+
+    document.getElementById('copyMyLink').onclick = () => {
+        navigator.clipboard.writeText(checkinUrl);
+        alert('Đã sao chép link!');
+    };
+}
         // Chạy
-        checkAuth();
+       
         render();
     </script>
 </body>
