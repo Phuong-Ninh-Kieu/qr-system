@@ -20,7 +20,6 @@
             align-items: center;
             padding: 20px;
             position: relative;
-            overflow-x: hidden;
         }
 
         body::before {
@@ -84,46 +83,20 @@
             font-size: 14px;
         }
 
-        .tabs {
-            display: flex;
-            background: #f8fafc;
-            padding: 0 24px;
-            gap: 8px;
-        }
-
-        .tab {
-            flex: 1;
-            text-align: center;
-            padding: 16px 12px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-            color: #64748b;
-            font-size: 15px;
-            border-bottom: 3px solid transparent;
-        }
-
-        .tab:hover {
-            color: #4f46e5;
-            background: rgba(79, 70, 229, 0.04);
-        }
-
-        .tab.active {
-            color: #4f46e5;
-            border-bottom-color: #4f46e5;
-        }
-
         .form-container {
             padding: 32px 32px 40px;
         }
 
-        .form {
-            display: none;
+        /* Form Login */
+        .login-form {
+            display: block;
             animation: fadeIn 0.4s ease;
         }
 
-        .form.active {
-            display: block;
+        /* Form Register - ẩn mặc định */
+        .register-form {
+            display: none;
+            animation: fadeIn 0.4s ease;
         }
 
         @keyframes fadeIn {
@@ -197,6 +170,7 @@
         button:disabled {
             opacity: 0.7;
             cursor: not-allowed;
+            transform: none;
         }
 
         .message {
@@ -272,14 +246,9 @@
             <p>Hệ Thống Quản Lý Điểm Danh Thông Minh</p>
         </div>
         
-        <div class="tabs">
-            <div class="tab active" data-tab="login">🔐 ĐĂNG NHẬP</div>
-            <div class="tab" data-tab="register">📝 ĐĂNG KÝ</div>
-        </div>
-        
         <div class="form-container">
-            <!-- Form Đăng Nhập -->
-            <div id="loginForm" class="form active">
+            <!-- FORM ĐĂNG NHẬP -->
+            <div id="loginForm" class="login-form">
                 <div class="input-group">
                     <label>👤 TÊN ĐĂNG NHẬP</label>
                     <input type="text" id="loginUsername" placeholder="Nhập tên đăng nhập">
@@ -293,13 +262,13 @@
                 <button id="loginBtn">ĐĂNG NHẬP</button>
                 <div class="form-link">
                     <span>🔑 Chưa có tài khoản?</span>
-                    <a id="gotoRegister"> Đăng ký ngay</a>
+                    <a id="showRegisterLink"> Đăng ký ngay</a>
                 </div>
                 <div id="loginMessage" class="message"></div>
             </div>
             
-            <!-- Form Đăng Ký -->
-            <div id="registerForm" class="form">
+            <!-- FORM ĐĂNG KÝ (ẨN MẶC ĐỊNH) -->
+            <div id="registerForm" class="register-form">
                 <div class="input-group">
                     <label>👤 TÊN ĐĂNG NHẬP</label>
                     <input type="text" id="regUsername" placeholder="Chọn tên đăng nhập (chữ, số, _)">
@@ -318,7 +287,7 @@
                 <button id="registerBtn">ĐĂNG KÝ NGAY</button>
                 <div class="form-link">
                     <span>✅ Đã có tài khoản?</span>
-                    <a id="gotoLogin"> Đăng nhập ngay</a>
+                    <a id="showLoginLink"> Đăng nhập ngay</a>
                 </div>
                 <div id="registerMessage" class="message"></div>
             </div>
@@ -345,13 +314,12 @@
         const ADMIN_PASSWORD = "admin123";
 
         // DOM elements
-        const tabs = document.querySelectorAll('.tab');
         const loginForm = document.getElementById('loginForm');
         const registerForm = document.getElementById('registerForm');
         const loginBtn = document.getElementById('loginBtn');
         const registerBtn = document.getElementById('registerBtn');
-        const gotoRegister = document.getElementById('gotoRegister');
-        const gotoLogin = document.getElementById('gotoLogin');
+        const showRegisterLink = document.getElementById('showRegisterLink');
+        const showLoginLink = document.getElementById('showLoginLink');
         
         // Inputs
         const loginUsername = document.getElementById('loginUsername');
@@ -370,21 +338,20 @@
         const loginMessage = document.getElementById('loginMessage');
         const registerMessage = document.getElementById('registerMessage');
 
-        function switchTab(tab) {
-            tabs.forEach(t => t.classList.remove('active'));
-            if (tab === 'login') {
-                tabs[0].classList.add('active');
-                loginForm.classList.add('active');
-                registerForm.classList.remove('active');
-                clearLoginErrors();
-                clearLoginMessage();
-            } else {
-                tabs[1].classList.add('active');
-                registerForm.classList.add('active');
-                loginForm.classList.remove('active');
-                clearRegisterErrors();
-                clearRegisterMessage();
-            }
+        // Hiển thị form đăng nhập, ẩn form đăng ký
+        function showLoginForm() {
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+            clearLoginErrors();
+            clearLoginMessage();
+        }
+
+        // Hiển thị form đăng ký, ẩn form đăng nhập
+        function showRegisterForm() {
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'block';
+            clearRegisterErrors();
+            clearRegisterMessage();
         }
 
         function clearLoginErrors() {
@@ -434,12 +401,11 @@
             }, 300);
         }
 
-        // Validate username
         function isValidUsername(username) {
             return /^[a-zA-Z0-9_]+$/.test(username);
         }
 
-        // Login handler
+        // XỬ LÝ ĐĂNG NHẬP
         async function handleLogin() {
             const username = loginUsername.value.trim();
             const password = loginPassword.value;
@@ -464,7 +430,7 @@
                 return;
             }
             
-            // Admin check
+            // Kiểm tra admin
             if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
                 localStorage.setItem('currentUser', JSON.stringify({
                     username: ADMIN_USERNAME,
@@ -477,7 +443,7 @@
                 return;
             }
             
-            // User check from DB
+            // Kiểm tra user trong database
             loginBtn.disabled = true;
             loginBtn.textContent = '⏳ ĐANG XỬ LÝ...';
             
@@ -507,7 +473,7 @@
             }
         }
         
-        // Register handler
+        // XỬ LÝ ĐĂNG KÝ
         async function handleRegister() {
             const username = regUsername.value.trim();
             const password = regPassword.value;
@@ -572,8 +538,9 @@
                 
                 showMessage(registerMessage, '🎉 Đăng ký thành công!', false);
                 
+                // Sau 1.5 giây, chuyển về form đăng nhập và điền tên đăng nhập
                 setTimeout(() => {
-                    switchTab('login');
+                    showLoginForm();
                     loginUsername.value = username;
                     loginPassword.value = '';
                     clearLoginErrors();
@@ -592,17 +559,17 @@
         loginBtn.addEventListener('click', handleLogin);
         registerBtn.addEventListener('click', handleRegister);
         
-        gotoRegister.addEventListener('click', () => switchTab('register'));
-        gotoLogin.addEventListener('click', () => switchTab('login'));
-        
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabName = tab.getAttribute('data-tab');
-                switchTab(tabName);
-            });
+        showRegisterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showRegisterForm();
         });
         
-        // Enter key support
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showLoginForm();
+        });
+        
+        // Hỗ trợ phím Enter
         loginPassword.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleLogin();
         });
@@ -611,7 +578,7 @@
             if (e.key === 'Enter') handleRegister();
         });
         
-        // Clear error on input
+        // Xóa lỗi khi người dùng nhập
         loginUsername.addEventListener('input', () => {
             loginUsernameError.classList.remove('show');
             loginUsername.classList.remove('error');
