@@ -543,7 +543,7 @@ encodeURIComponent(currentUser.username);
             }
             
             container.innerHTML = filtered.map(c => `
-                <div class="checkin-item" onclick='showDetail("${c.id}")'>
+                <div class="checkin-item" onclick='showDetail("${c.ownerUser}","${c.id}")'>
                     <div class="checkin-name">
                         👤 ${c.fullName}
 <span class="badge">
@@ -561,31 +561,47 @@ ${c.ownerUser}
             `).join('');
         }
 
-        window.showDetail = async function(id) {
-            const snapshot = await database.ref('checkins/' + id).once('value');
-            const data = snapshot.val();
-            if (!data) return;
-            
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3>📋 Chi Tiết Điểm Danh</h3>
-                        <span class="close-modal" onclick="this.closest('.modal').remove()">&times;</span>
-                    </div>
-                    <p><strong>👤 Họ tên:</strong> ${data.fullName}</p>
-                    <p><strong>📅 Năm sinh:</strong> ${data.birthYear}</p>
-                    <p><strong>🎓 Lớp:</strong> ${data.class}</p>
-                    <p><strong>👥 Chi đoàn:</strong> ${data.union}</p>
-                    <p><strong>🕐 Thời gian:</strong> ${data.time}</p>
-                    <p><strong>📝 Ghi chú:</strong> ${data.note || 'Không có'}</p>
-                </div>
-            `;
-            document.body.appendChild(modal);
-            modal.style.display = 'flex';
-            modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-        };
+        window.showDetail = async function(ownerUser,id) {
+
+    const snapshot =
+        await database.ref('checkins/' + ownerUser + '/' + id).once('value');
+
+    const data = snapshot.val();
+
+    if (!data) return;
+
+    const modal = document.createElement('div');
+
+    modal.className = 'modal';
+
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📋 Chi Tiết Điểm Danh</h3>
+
+                <span class="close-modal"
+                onclick="this.closest('.modal').remove()">
+                &times;
+                </span>
+            </div>
+
+            <p><strong>👤 Họ tên:</strong> ${data.fullName}</p>
+            <p><strong>📅 Năm sinh:</strong> ${data.birthYear}</p>
+            <p><strong>🎓 Lớp:</strong> ${data.class}</p>
+            <p><strong>👥 Chi đoàn:</strong> ${data.union}</p>
+            <p><strong>🕐 Thời gian:</strong> ${data.time}</p>
+            <p><strong>📝 Ghi chú:</strong> ${data.note || 'Không có'}</p>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.style.display = 'flex';
+
+    modal.onclick = (e)=>{
+        if(e.target===modal) modal.remove();
+    };
+    }
 
         // User View
        async function renderUserView(container) {
