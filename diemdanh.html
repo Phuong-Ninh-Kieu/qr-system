@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Điểm Danh QR - Hệ Thống Chuyên Nghiệp</title>
+    <title>Hệ Thống Điểm Danh QR Chuyên Nghiệp</title>
     <style>
         * {
             margin: 0;
@@ -12,208 +12,197 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background: #f3f4f6;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
             min-height: 100vh;
-            color: #111827;
+            color: #0f172a;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Header mới tinh tế */
+        /* Header Hiện Đại & Gọn Gàng */
         .header {
             background: #ffffff;
-            backdrop-filter: blur(0px);
-            border-bottom: 1px solid #e9eef3;
-            padding: 0 32px;
-            height: 70px;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 40px;
+            height: 64px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.05);
         }
         .header h2 { 
-            font-size: 1.45rem; 
-            font-weight: 600; 
-            background: linear-gradient(135deg, #1E3A8A, #3B82F6);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            letter-spacing: -0.3px;
+            font-size: 1.25rem; 
+            font-weight: 700; 
+            color: #1e3a8a;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
         .user-info { 
             display: flex; 
             align-items: center; 
-            gap: 18px; 
-            background: #f8fafc;
-            padding: 6px 18px;
-            border-radius: 100px;
-            border: 1px solid #e2e8f0;
+            gap: 12px; 
         }
         .user-info span:first-child {
-            font-weight: 500;
-            color: #1e293b;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #334155;
         }
         .logout-btn { 
-            background: transparent; 
+            background: #fff; 
             padding: 6px 14px; 
-            border-radius: 40px; 
+            border-radius: 8px; 
             cursor: pointer; 
-            transition: all 0.2s ease; 
-            font-size: 13px;
+            transition: all 0.2s; 
+            font-size: 0.85rem;
             font-weight: 500;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
+            color: #ef4444;
+            border: 1px solid #fee2e2;
         }
         .logout-btn:hover { 
-            background: #fee2e2; 
-            color: #dc2626;
-            border-color: #fecaca;
+            background: #fef2f2; 
         }
 
-        /* Container rộng rãi */
-        .container { max-width: 1440px; margin: 28px auto; padding: 0 32px; }
+        /* Layout Grid Thông Minh Tránh Tràn Trang */
+        .container { 
+            max-width: 1400px; 
+            margin: 32px auto; 
+            padding: 0 40px; 
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 32px;
+            align-items: start;
+        }
 
-        /* Card hiện đại */
+        /* Card Thiết Kế Tối Giản */
         .card { 
-            background: white; 
-            border-radius: 28px; 
-            padding: 28px 32px; 
-            margin-bottom: 28px; 
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
-            border: 1px solid #edf2f7;
-            transition: box-shadow 0.2s;
+            background: #ffffff; 
+            border-radius: 16px; 
+            padding: 24px; 
+            margin-bottom: 24px; 
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
         }
-        .card:hover { box-shadow: 0 12px 28px rgba(0, 0, 0, 0.05); }
         .card h3 { 
-            font-size: 1.25rem; 
-            margin-bottom: 22px; 
-            color: #0f172a; 
-            font-weight: 600; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            letter-spacing: -0.2px;
+            font-size: 1rem; 
+            margin-bottom: 20px; 
+            color: #1e293b; 
+            font-weight: 700; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        /* QR Section tinh gọn */
+        /* Khu Vực QR Đẹp Mắt */
         .qr-box { 
             text-align: center; 
-            padding: 20px 24px; 
-            background: #fefefe; 
-            border-radius: 24px; 
-            border: 1px solid #eef2f6;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px dashed #cbd5e1;
         }
         #qrcode { 
             display: inline-block; 
-            padding: 12px; 
+            padding: 16px; 
             background: white; 
-            border-radius: 24px; 
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05); 
-            margin: 8px 0 16px;
-            border: 1px solid #eef2f8;
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 16px;
         }
-        .qr-content-input { margin: 20px 0 10px; text-align: left; }
-        .qr-content-input label { 
+        
+        .form-group { margin-bottom: 16px; text-align: left; }
+        .form-group label { 
             font-weight: 600; 
-            color: #1e293b; 
-            font-size: 0.8rem; 
+            color: #475569; 
+            font-size: 0.85rem; 
             margin-bottom: 6px; 
             display: block;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
         }
-        .qr-content-input input, .qr-content-input textarea { 
+        .form-group input, .form-group textarea { 
             width: 100%; 
-            padding: 12px 16px; 
-            border: 1.5px solid #e2edf2; 
-            border-radius: 18px; 
+            padding: 10px 14px; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 8px; 
             font-size: 0.9rem; 
             transition: all 0.2s;
-            background: #ffffff;
-            font-family: inherit;
+            background: #fff;
+            color: #0f172a;
         }
-        .qr-content-input input:focus, .qr-content-input textarea:focus { 
+        .form-group input:focus, .form-group textarea:focus { 
             outline: none; 
-            border-color: #3b82f6; 
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+            border-color: #2563eb; 
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
         }
 
-        /* Buttons */
-        .btn-primary, .btn-secondary, .btn-danger, .btn-outline, .btn-sm { 
+        /* Hệ Thống Nút Chuẩn Chỉ */
+        .btn-primary, .btn-secondary, .btn-danger, .btn-outline { 
             border: none; 
             cursor: pointer; 
             font-weight: 500; 
-            transition: all 0.2s ease; 
+            transition: all 0.2s; 
             display: inline-flex; 
             align-items: center; 
-            gap: 8px; 
+            gap: 6px; 
             justify-content: center;
-            border-radius: 40px;
-        }
-        .btn-primary { 
-            background: #1f2937; 
-            color: white; 
-            padding: 10px 24px; 
+            border-radius: 8px;
             font-size: 0.85rem;
-            font-weight: 500;
+            padding: 10px 16px;
         }
-        .btn-primary:hover { background: #111827; transform: translateY(-1px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
-        .btn-secondary { background: #f1f5f9; color: #1e293b; padding: 8px 20px; font-size: 0.8rem; border: 1px solid #e2e8f0; }
-        .btn-secondary:hover { background: #e6edf5; }
-        .btn-danger { background: #ffffff; color: #dc2626; padding: 6px 14px; font-size: 0.75rem; border: 1px solid #fee2e2; }
-        .btn-danger:hover { background: #fef2f2; border-color: #fecaca; }
-        .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: #475569; padding: 6px 14px; font-size: 0.75rem; border-radius: 30px; }
-        .btn-outline:hover { background: #f8fafc; border-color: #3b82f6; color: #2563eb; }
-        .btn-sm { padding: 5px 12px; font-size: 0.7rem; border-radius: 24px; }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-secondary { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+        .btn-secondary:hover { background: #e2e8f0; }
+        .btn-danger { background: #fee2e2; color: #dc2626; padding: 6px 12px; font-size: 0.8rem; }
+        .btn-danger:hover { background: #fca5a5; }
+        .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: #475569; padding: 6px 12px; font-size: 0.8rem; }
+        .btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
 
-        /* Stats */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 6px; }
-        .stat-card { background: #f9fafb; border-radius: 24px; padding: 20px; text-align: center; border: 1px solid #eef2f6; transition: all 0.2s; }
-        .stat-card h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: #5b6e8c; margin-bottom: 8px; }
-        .stat-card .number { font-size: 36px; font-weight: 700; color: #0f172a; margin-top: 6px; line-height: 1.2; }
+        /* Stats Đồng Bộ */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .stat-card { background: #f8fafc; border-radius: 12px; padding: 16px; text-align: left; border: 1px solid #e2e8f0; }
+        .stat-card h4 { font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
+        .stat-card .number { font-size: 2rem; font-weight: 700; color: #1e3a8a; margin-top: 4px; }
 
-        /* QR Stats */
-        .qr-stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 16px; }
-        .qr-stat-card { background: #f9fafc; border-radius: 20px; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #edf2f7; transition: all 0.2s; }
-        .qr-stat-card:hover { background: #ffffff; border-color: #e2e8f0; transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.02); }
-        .qr-stat-info { flex: 1; }
-        .qr-stat-title { font-weight: 600; color: #1e293b; font-size: 0.85rem; word-break: break-word; }
-        .qr-stat-count { font-size: 28px; font-weight: 700; color: #2563eb; margin-right: 16px; min-width: 52px; text-align: center; }
+        /* Khối Nội Dung QR Cuộn Mượt */
+        .qr-stats-container { max-height: 320px; overflow-y: auto; padding-right: 4px; }
+        .qr-stat-card { background: #fff; border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; margin-bottom: 10px; }
+        .qr-stat-title { font-weight: 600; color: #334155; font-size: 0.85rem; word-break: break-word; }
+        .qr-stat-count { font-size: 1.1rem; font-weight: 700; color: #2563eb; margin-left: 12px; }
 
-        /* Search & Table */
-        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
-        .search-box { padding: 10px 18px; border: 1.5px solid #e2edf2; border-radius: 40px; font-size: 0.85rem; width: 100%; max-width: 280px; transition: 0.2s; background: #fff; }
-        .search-box:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.08); }
-        .table-wrapper { overflow-x: auto; border-radius: 20px; border: 1px solid #eff3f8; background: white; }
-        .data-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 860px; }
-        .data-table th { background: #fcfdfe; color: #334155; padding: 14px 12px; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 1px solid #eef2f8; }
-        .data-table td { padding: 12px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; color: #1f2a3e; }
-        .data-table tr:hover { background: #fafcff; }
-        .delete-icon { color: #94a3b8; cursor: pointer; transition: 0.2s; font-size: 18px; opacity: 0.6; }
-        .delete-icon:hover { color: #ef4444; opacity: 1; transform: scale(1.05); }
+        /* Bộ Lọc & Bảng Dữ Liệu Chuyên Nghiệp */
+        .flex-between { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
+        .search-box { padding: 10px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; width: 280px; transition: 0.2s; }
+        .search-box:focus { outline: none; border-color: #2563eb; }
+        
+        .table-wrapper { overflow-x: auto; border-radius: 12px; border: 1px solid #e2e8f0; background: white; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 900px; text-align: left; }
+        .data-table th { background: #f8fafc; color: #475569; padding: 14px 16px; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; }
+        .data-table td { padding: 14px 16px; border-bottom: 1px solid #e2e8f0; color: #334155; }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover { background: #f8fafc; }
+        
+        .delete-icon { color: #94a3b8; cursor: pointer; transition: 0.2s; font-size: 16px; }
+        .delete-icon:hover { color: #ef4444; }
 
-        /* Modal */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(3px); }
-        .modal-content { background: white; border-radius: 32px; padding: 28px; max-width: 460px; width: 90%; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .modal-close { cursor: pointer; font-size: 24px; color: #94a3b8; transition: 0.1s; }
-        .modal-close:hover { color: #1e293b; }
-        .alert { padding: 14px; border-radius: 20px; margin-bottom: 16px; text-align: center; font-size: 0.8rem; font-weight: 500; }
-        .alert-success { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
-        .alert-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
-        .no-data { text-align: center; padding: 48px 20px; color: #6b7280; font-size: 0.85rem; }
-        .badge { background: #f1f5f9; color: #334155; padding: 4px 10px; border-radius: 30px; font-size: 0.7rem; font-weight: 500; display: inline-block; }
-        .flex-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        /* Nhãn Trạng Thái Trực Quan */
+        .badge { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+        .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.85rem; font-weight: 500; }
+        .alert-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .alert-error { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+        .no-data { text-align: center; padding: 40px 20px; color: #64748b; font-size: 0.9rem; }
+        .flex-row { display: flex; align-items: center; gap: 8px; }
 
-        @media (max-width: 640px) {
+        @media (max-width: 1024px) {
+            .dashboard-grid { grid-template-columns: 1fr; gap: 0; }
             .container { padding: 0 20px; margin: 20px auto; }
-            .card { padding: 20px; }
-            .header { padding: 0 20px; height: 64px; }
+            .header { padding: 0 20px; }
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -222,13 +211,16 @@
 </head>
 <body>
     <div class="header">
-        <h2>🎯 Điểm Danh QR</h2>
+        <h2>🎯 Hệ Thống Điểm Danh QR</h2>
         <div class="user-info">
             <span id="userDisplay"></span>
             <span class="logout-btn" onclick="logout()">Đăng xuất</span>
         </div>
     </div>
-    <div class="container" id="mainContainer"><div class="loading">Đang tải dữ liệu...</div></div>
+    
+    <div class="container" id="mainContainer">
+        <div class="no-data">Đang tải cấu trúc dữ liệu...</div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -251,7 +243,7 @@
             const userStr = localStorage.getItem('currentUser');
             if (!userStr) { window.location.href = 'index.html'; return false; }
             currentUser = JSON.parse(userStr);
-            document.getElementById('userDisplay').innerHTML = `<span>👤 ${escapeHtml(currentUser.username)}</span>`;
+            document.getElementById('userDisplay').innerHTML = `👤 ${escapeHtml(currentUser.username)}`;
             return true;
         }
         function logout() { localStorage.removeItem('currentUser'); window.location.href = 'index.html'; }
@@ -268,24 +260,24 @@
             await renderAdminView(container);
         }
 
-        // ========== FORM ĐIỂM DANH gọn đẹp ==========
+        // ========== FORM ĐIỂM DANH CLIENT ==========
         async function renderCheckinForm(container) {
             const ownerUser = new URLSearchParams(window.location.search).get('user') || 'public';
             let qrContent = "";
             try { const snap = await database.ref('qrContents/' + ownerUser).once('value'); qrContent = snap.val() || ""; } catch(e) {}
             const todayDate = new Date().toLocaleDateString('vi-VN');
             container.innerHTML = `
-                <div class="card" style="max-width:540px; margin:20px auto;">
-                    <h3 style="border-left:0; text-align:center;">📋 XÁC NHẬN ĐIỂM DANH</h3>
-                    <p style="text-align:center; color:#4b5563; margin-bottom:12px;">📅 ${todayDate}</p>
-                    ${qrContent ? `<div class="alert alert-success" style="margin-bottom:20px;">📌 ${escapeHtml(qrContent)}</div>` : ''}
+                <div class="card" style="max-width:500px; margin:40px auto; border-top: 4px solid #2563eb;">
+                    <h3 style="text-align:center; display:block; margin-bottom:8px;">📋 XÁC NHẬN ĐIỂM DANH</h3>
+                    <p style="text-align:center; color:#64748b; font-size:0.9rem; margin-bottom:24px;">Ngày: ${todayDate}</p>
+                    ${qrContent ? `<div class="alert alert-success" style="text-align:center;">📌 ${escapeHtml(qrContent)}</div>` : ''}
                     <div id="alertMessage"></div>
-                    <div class="qr-content-input"><label>👤 Họ và tên</label><input type="text" id="fullName" placeholder="Nguyễn Văn A"></div>
-                    <div class="qr-content-input"><label>📅 Năm sinh</label><input type="number" id="birthYear" placeholder="2005"></div>
-                    <div class="qr-content-input"><label>🏫 Lớp</label><input type="text" id="class" placeholder="12A1"></div>
-                    <div class="qr-content-input"><label>👥 Chi đoàn</label><input type="text" id="union" placeholder="Đoàn trường"></div>
-                    <div class="qr-content-input"><label>📝 Ghi chú (nếu có)</label><textarea id="note" rows="2" placeholder="...." style="width:100%; padding:12px; border-radius:18px; border:1.5px solid #e2edf2;"></textarea></div>
-                    <button class="btn-primary" id="submitBtn" style="width:100%; margin-top:10px; padding:12px;">✅ Xác nhận điểm danh</button>
+                    <div class="form-group"><label>Họ và tên *</label><input type="text" id="fullName" placeholder="Ví dụ: Nguyễn Văn A"></div>
+                    <div class="form-group"><label>Năm sinh *</label><input type="number" id="birthYear" placeholder="Ví dụ: 2005"></div>
+                    <div class="form-group"><label>Lớp *</label><input type="text" id="class" placeholder="Ví dụ: 12A1"></div>
+                    <div class="form-group"><label>Chi đoàn *</label><input type="text" id="union" placeholder="Ví dụ: Đoàn trường"></div>
+                    <div class="form-group"><label>Ghi chú (nếu có)</label><textarea id="note" rows="2" placeholder="Nhập ghi chú..."></textarea></div>
+                    <button class="btn-primary" id="submitBtn" style="width:100%; padding:12px; font-size:1rem; font-weight:600; margin-top:8px;">Xác nhận hoàn tất</button>
                 </div>
             `;
             document.getElementById('submitBtn').onclick = () => submitCheckin(todayDate, qrContent, ownerUser);
@@ -296,9 +288,9 @@
             const birthYear = document.getElementById('birthYear').value;
             const className = document.getElementById('class').value.trim();
             const union = document.getElementById('union').value.trim();
-            const note = document.getElementById('note').value;
+            const note = document.getElementById('note').value.trim();
             if (!fullName || !birthYear || !className || !union) {
-                showAlert('Vui lòng điền đầy đủ thông tin (*)', 'error');
+                showAlert('Vui lòng điền đầy đủ các thông tin bắt buộc (*)', 'error');
                 return;
             }
             const now = new Date();
@@ -308,23 +300,23 @@
             };
             try {
                 await database.ref('checkins/' + ownerUser + '/' + record.id).set(record);
-                showAlert('✅ Điểm danh thành công!', 'success');
+                showAlert('🎉 Điểm danh thành công!', 'success');
                 document.getElementById('fullName').value = '';
                 document.getElementById('birthYear').value = '';
                 document.getElementById('class').value = '';
                 document.getElementById('union').value = '';
                 document.getElementById('note').value = '';
-                setTimeout(() => showAlert('', ''), 2000);
-            } catch (error) { showAlert('❌ Lỗi: ' + error.message, 'error'); }
+            } catch (error) { showAlert('❌ Lỗi hệ thống: ' + error.message, 'error'); }
         }
+        
         function showAlert(msg, type) {
             const div = document.getElementById('alertMessage');
-            if(div) { div.innerHTML = msg ? `<div class="alert alert-${type}">${msg}</div>` : ''; if(msg) setTimeout(() => div.innerHTML = '', 2800); }
+            if(div) { div.innerHTML = msg ? `<div class="alert alert-${type}">${msg}</div>` : ''; }
         }
 
-        // ========== XÓA DỮ LIỆU ==========
+        // ========== CHỨC NĂNG ADMIN ==========
         async function deleteCheckin(ownerUser, id) {
-            if (!confirm('Bạn có chắc muốn xóa bản ghi điểm danh này?')) return;
+            if (!confirm('Bạn có chắc chắn muốn xóa bản ghi điểm danh này?')) return;
             try {
                 await database.ref('checkins/' + ownerUser + '/' + id).remove();
                 await renderAdminView(document.getElementById('mainContainer'));
@@ -333,7 +325,7 @@
 
         async function deleteByQrContent(ownerUser, qrContent) {
             const displayContent = qrContent || "(Không có nội dung)";
-            if (!confirm(`⚠️ Xóa TẤT CẢ điểm danh có nội dung: "${displayContent}"? Hành động không thể hoàn tác.`)) return;
+            if (!confirm(`⚠️ Cảnh báo: Xóa TOÀN BỘ lượt điểm danh thuộc nội dung: "${displayContent}"?\nHành động này không thể khôi phục.`)) return;
             try {
                 const snapshot = await database.ref('checkins/' + ownerUser).once('value');
                 const data = snapshot.val() || {};
@@ -349,14 +341,14 @@
         }
 
         function exportToExcel(data, username) {
-            if (!data.length) { alert("Không có dữ liệu để xuất!"); return; }
+            if (!data.length) { alert("Không có dữ liệu để xuất file!"); return; }
             const exportData = data.map(item => ({
-                "Ngày điểm danh": item.date, "Họ tên": item.fullName, "Năm sinh": item.birthYear,
-                "Lớp": item.class, "Chi đoàn": item.union, "Nội dung QR": item.qrContent, "Ghi chú": item.note, "Thời gian": item.time
+                "Ngày": item.date, "Họ tên": item.fullName, "Năm sinh": item.birthYear,
+                "Lớp": item.class, "Chi đoàn": item.union, "Nội dung sự kiện": item.qrContent, "Ghi chú": item.note, "Thời gian quét": item.time
             }));
             const ws = XLSX.utils.json_to_sheet(exportData);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "DanhSach");
+            XLSX.utils.book_append_sheet(wb, ws, "Danh Sách");
             XLSX.writeFile(wb, `DiemDanh_${username}_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.xlsx`);
         }
 
@@ -366,10 +358,10 @@
             try {
                 const canvas = await html2canvas(el, { scale: 3, backgroundColor: '#ffffff' });
                 const link = document.createElement('a');
-                link.download = `QR_${currentUser.username}.png`;
+                link.download = `QR_Code_${currentUser.username}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-            } catch (e) { alert('Không thể tải QR'); }
+            } catch (e) { alert('Lỗi tải xuống ảnh QR'); }
         }
 
         async function saveQrContent() {
@@ -380,7 +372,7 @@
             } catch (error) { alert('Lỗi: ' + error.message); }
         }
 
-        // ========== GIAO DIỆN ADMIN TINH TẾ ==========
+        // ========== GIAO DIỆN ADMIN CHUYÊN NGHIỆP ==========
         async function renderAdminView(container) {
             try {
                 let savedQrContent = "";
@@ -406,83 +398,96 @@
                     qrStats.set(content, (qrStats.get(content) || 0) + 1);
                 });
                 
-                let qrStatsHtml = '<div class="qr-stats-grid">';
+                let qrStatsHtml = '<div class="qr-stats-container">';
                 for (let [content, count] of qrStats) {
                     qrStatsHtml += `
                         <div class="qr-stat-card">
-                            <div class="qr-stat-info">
-                                <div class="qr-stat-title">📌 ${escapeHtml(content.length > 50 ? content.substring(0,50)+'...' : content)}</div>
-                                <div class="badge" style="margin-top:6px;">${count} lượt</div>
+                            <div>
+                                <div class="qr-stat-title">📌 ${escapeHtml(content.length > 40 ? content.substring(0,40)+'...' : content)}</div>
+                                <span class="badge" style="margin-top:6px; background:#f1f5f9; color:#475569;">${count} lượt</span>
                             </div>
-                            <div class="qr-stat-actions">
-                                <button class="btn-outline btn-sm" onclick='deleteByQrContent("${currentUser.username}","${escapeHtml(content).replace(/'/g, "\\'")}")'>Xóa ND</button>
-                            </div>
+                            <button class="btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick='deleteByQrContent("${currentUser.username}","${escapeHtml(content).replace(/'/g, "\\'")}")'>Xóa</button>
                         </div>
                     `;
                 }
                 qrStatsHtml += '</div>';
-                if (qrStats.size === 0) qrStatsHtml = '<div class="no-data">Chưa có dữ liệu theo nội dung</div>';
+                if (qrStats.size === 0) qrStatsHtml = '<div class="no-data">Chưa phân loại theo nội dung</div>';
                 
                 container.innerHTML = `
-                    <div class="card">
-                        <h3>📱 Mã QR điểm danh</h3>
-                        <div class="qr-box">
-                            <div id="qrcode"></div>
-                            <div class="qr-content-input">
-                                <label>✏️ Nội dung mô tả (lưu kèm mỗi lượt điểm danh)</label>
-                                <div class="flex-row">
-                                    <input type="text" id="qrContentInput" placeholder="Ví dụ: Sự kiện 26/3 - Hội trại" value="${escapeHtml(savedQrContent)}" style="flex:1;">
-                                    <button class="btn-primary" onclick="saveQrContent()">Lưu nội dung</button>
+                    <div class="dashboard-grid">
+                        <!-- CỘT TRÁI: CẤU HÌNH & THỐNG KÊ -->
+                        <div class="sidebar-area">
+                            <div class="card">
+                                <h3>📱 Cấu hình QR quét</h3>
+                                <div class="qr-box">
+                                    <div id="qrcode"></div>
+                                    <div class="flex-row" style="justify-content:center; margin-bottom:16px;">
+                                        <button class="btn-secondary" id="copyBtn" style="font-size:0.8rem;">🔗 Copy Link</button>
+                                        <button class="btn-primary" id="downloadBtn" style="font-size:0.8rem;">⬇️ Tải Ảnh</button>
+                                    </div>
+                                    <div class="form-group" style="border-top: 1px solid #e2e8f0; padding-top:16px; margin-bottom: 0;">
+                                        <label>Nội dung đính kèm lượt quét</label>
+                                        <input type="text" id="qrContentInput" placeholder="Ví dụ: Đại hội chi đoàn..." value="${escapeHtml(savedQrContent)}">
+                                        <button class="btn-secondary" onclick="saveQrContent()" style="width:100%; margin-top:8px; background:#1e293b; color:#fff;">Cập nhật nội dung</button>
+                                    </div>
                                 </div>
-                                ${savedQrContent ? `<div class="alert alert-success" style="margin-top:12px;">📢 Nội dung hiện tại: ${escapeHtml(savedQrContent)}</div>` : ''}
                             </div>
-                            <div class="flex-row" style="justify-content:center; margin:18px 0 6px;">
-                                <button class="btn-secondary" id="copyBtn">🔗 Sao chép link</button>
-                                <button class="btn-secondary" id="downloadBtn">⬇️ Tải QR (PNG)</button>
+                            
+                            <div class="card">
+                                <h3>📊 Thống kê nhanh</h3>
+                                <div class="stats-grid">
+                                    <div class="stat-card"><h4>Tổng số</h4><div class="number">${checkins.length}</div></div>
+                                    <div class="stat-card"><h4>Hôm nay</h4><div class="number">${todayCount}</div></div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <div class="card">
-                        <h3>📊 Thống kê nhanh</h3>
-                        <div class="stats-grid">
-                            <div class="stat-card"><h4>Tổng lượt điểm danh</h4><div class="number">${checkins.length}</div></div>
-                            <div class="stat-card"><h4>Hôm nay</h4><div class="number">${todayCount}</div></div>
-                        </div>
-                    </div>
-                    
-                    <div class="card">
-                        <h3>🏷️ Thống kê theo nội dung QR</h3>
-                        ${qrStatsHtml}
-                    </div>
-                    
-                    <div class="card">
-                        <div class="flex-between">
-                            <h3>📋 Lịch sử điểm danh</h3>
-                            <div class="flex-row">
-                                <input type="text" id="searchInput" class="search-box" placeholder="Tìm kiếm theo tên, lớp, nội dung...">
-                                <button class="btn-primary" id="exportBtn">📎 Xuất Excel</button>
+                            
+                            <div class="card">
+                                <h3>🏷️ Sự kiện đã quét</h3>
+                                ${qrStatsHtml}
                             </div>
                         </div>
-                        <div class="table-wrapper">
-                            <table class="data-table">
-                                <thead>
-                                    <tr><th>Ngày</th><th>Họ tên</th><th>Năm sinh</th><th>Lớp</th><th>Chi đoàn</th><th>Nội dung QR</th><th>Ghi chú</th><th>Thời gian</th><th style="width:40px"></th></tr>
-                                </thead>
-                                <tbody id="tableBody"></tbody>
-                            </table>
+                        
+                        <!-- CỘT PHẢI: LỊCH SỬ CHI TIẾT -->
+                        <div class="main-content-area">
+                            <div class="card" style="margin-bottom:0;">
+                                <div class="flex-between">
+                                    <h3>📋 Nhật ký điểm danh chi tiết</h3>
+                                    <div class="flex-row">
+                                        <input type="text" id="searchInput" class="search-box" placeholder="Tìm kiếm nhanh tên, lớp...">
+                                        <button class="btn-primary" id="exportBtn" style="background:#16a34a;">Xuất Excel</button>
+                                    </div>
+                                </div>
+                                <div class="table-wrapper">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Ngày</th>
+                                                <th>Họ và Tên</th>
+                                                <th>Năm sinh</th>
+                                                <th>Lớp</th>
+                                                <th>Chi đoàn</th>
+                                                <th>Sự kiện</th>
+                                                <th>Ghi chú</th>
+                                                <th>Thời gian</th>
+                                                <th style="width:40px"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tableBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
                 
-                new QRCode(document.getElementById("qrcode"), { text: checkinUrl, width: 210, height: 210, colorDark: "#0f172a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.Q });
-                document.getElementById('copyBtn').onclick = () => { navigator.clipboard.writeText(checkinUrl); alert('Đã sao chép liên kết điểm danh'); };
+                new QRCode(document.getElementById("qrcode"), { text: checkinUrl, width: 180, height: 180, colorDark: "#0f172a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+                document.getElementById('copyBtn').onclick = () => { navigator.clipboard.writeText(checkinUrl); alert('Đã sao chép liên kết điểm danh thành công!'); };
                 document.getElementById('downloadBtn').onclick = downloadQRCode;
                 
                 const renderTable = (list) => {
                     const tbody = document.getElementById('tableBody');
                     if (!tbody) return;
-                    if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="no-data">📭 Chưa có lượt điểm danh nào</td></tr>'; return; }
+                    if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="no-data">📭 Không tìm thấy bản ghi điểm danh nào phù hợp</td></tr>'; return; }
                     tbody.innerHTML = list.map(item => `
                         <tr>
                             <td><span class="badge">${escapeHtml(item.date || '--')}</span></td>
@@ -490,9 +495,9 @@
                             <td>${escapeHtml(item.birthYear || '')}</td>
                             <td>${escapeHtml(item.class || '')}</td>
                             <td>${escapeHtml(item.union || '')}</td>
-                            <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(item.qrContent || '')}">${escapeHtml(item.qrContent ? (item.qrContent.length > 28 ? item.qrContent.substring(0,28)+'…' : item.qrContent) : '—')}</td>
-                            <td>${escapeHtml(item.note ? (item.note.length>22 ? item.note.substring(0,22)+'…' : item.note) : '—')}</td>
-                            <td style="font-size:0.7rem;">${escapeHtml(item.time || '')}</td>
+                            <td style="max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(item.qrContent || '')}">${escapeHtml(item.qrContent || '—')}</td>
+                            <td style="max-width:140px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(item.note || '')}">${escapeHtml(item.note || '—')}</td>
+                            <td style="color:#64748b; font-size:0.8rem;">${escapeHtml(item.time ? item.time.split(' ')[1] || item.time : '')}</td>
                             <td><span class="delete-icon" onclick="deleteCheckin('${currentUser.username}','${item.id}')">🗑️</span></td>
                         </tr>
                     `).join('');
@@ -514,7 +519,7 @@
                 
             } catch (error) {
                 console.error(error);
-                container.innerHTML = `<div class="card" style="color:#b91c1c;">⚠️ Lỗi tải dữ liệu: ${error.message}</div>`;
+                container.innerHTML = `<div class="card" style="color:#b91c1c;">⚠️ Lỗi nạp thông tin từ hệ thống: ${error.message}</div>`;
             }
         }
         
