@@ -140,6 +140,49 @@
             margin-top: 8px;
         }
 
+        /* Thống kê theo nội dung QR */
+        .qr-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .qr-stat-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 20px;
+            padding: 16px;
+            border-left: 4px solid #7c3aed;
+            transition: transform 0.2s;
+        }
+        .qr-stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+        .qr-stat-title {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 14px;
+            margin-bottom: 8px;
+            word-break: break-word;
+        }
+        .qr-stat-count {
+            font-size: 32px;
+            font-weight: 800;
+            color: #7c3aed;
+        }
+        .qr-stat-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-left: 8px;
+        }
+        .qr-stat-empty {
+            background: #fef2f2;
+            border-left-color: #ef4444;
+        }
+        .qr-stat-empty .qr-stat-count {
+            color: #ef4444;
+        }
+
         .form-group {
             margin-bottom: 20px;
         }
@@ -199,6 +242,12 @@
         .btn-save-content {
             background: #7c3aed;
             margin-left: 12px;
+            padding: 10px 20px;
+            border-radius: 40px;
+            border: none;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
         }
         .search-box {
             width: 100%;
@@ -314,6 +363,15 @@
             font-size: 13px;
             color: #92400e;
         }
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
         @media (max-width: 680px) {
             .container { padding: 0 16px; }
             .card { padding: 20px; }
@@ -353,9 +411,8 @@
         const database = firebase.database();
 
         let currentUser = null;
-        let currentQrContent = ""; // Lưu nội dung QR hiện tại
+        let currentQrContent = "";
 
-        // Kiểm tra đăng nhập
         function checkAuth() {
             const userStr = localStorage.getItem('currentUser');
             if (!userStr) {
@@ -377,29 +434,27 @@
             const urlParams = new URLSearchParams(window.location.search);
             const mode = urlParams.get('mode');
 
-            // Chế độ điểm danh (người quét QR)
             if (mode === 'checkin') {
                 document.querySelector('.header').style.display = 'none';
                 await renderCheckinForm(container);
                 return;
             }
 
-            // Giao diện chính: MỖI NGƯỜI DÙNG ĐỀU LÀ ADMIN CỦA CHÍNH MÌNH
             if (!checkAuth()) return;
             await renderAdminView(container);
         }
 
-        // ==================== FORM ĐIỂM DANH (Người quét QR) ====================
         async function renderCheckinForm(container) {
             const urlParams = new URLSearchParams(window.location.search);
             const ownerUser = urlParams.get('user') || 'public';
             
-            // Lấy nội dung QR của chủ sở hữu
             let qrContent = "";
             try {
                 const contentSnapshot = await database.ref('qrContents/' + ownerUser).once('value');
                 qrContent = contentSnapshot.val() || "";
-            } catch(e) { console.error(e); }
+            } catch(e) { 
+                console.warn("Không thể lấy nội dung QR:", e);
+            }
             
             const todayDate = new Date().toLocaleDateString('vi-VN');
             container.innerHTML = `
@@ -461,12 +516,11 @@
                 time: timeFormatted,
                 timestamp: now.getTime(),
                 date: dateFormatted,
-                qrContent: qrContent || ""  // Lưu nội dung QR vào mỗi bản ghi
+                qrContent: qrContent || ""
             };
             
             try {
                 await database.ref('checkins/' + ownerUser + '/' + checkinId).set(checkinRecord);
-                
                 alert('🎉 Điểm danh thành công!');
                 showAlert('✅ Điểm danh thành công!', 'success');
                 
@@ -489,7 +543,6 @@
             }
         }
 
-        // ==================== XUẤT EXCEL ====================
         function exportToExcel(checkinArray, username) {
             if (!checkinArray.length) {
                 alert("Không có dữ liệu để xuất Excel.");
@@ -511,16 +564,11 @@
             XLSX.writeFile(wb, `DiemDanh_${username}_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.xlsx`);
         }
 
-        // Tải QR Code về máy
         async function downloadQRCode() {
             const qrcodeDiv = document.getElementById('qrcode');
             if (!qrcodeDiv) return;
-            
             try {
-                const canvas = await html2canvas(qrcodeDiv, {
-                    scale: 3,
-                    backgroundColor: '#ffffff'
-                });
+                const canvas = await html2canvas(qrcodeDiv, { scale: 3, backgroundColor: '#ffffff' });
                 const link = document.createElement('a');
                 const fileName = `QR_${currentUser.username}_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.png`;
                 link.download = fileName;
@@ -528,36 +576,68 @@
                 link.click();
                 alert('✅ Đã tải mã QR thành công!');
             } catch (error) {
-                console.error(error);
                 alert('❌ Lỗi khi tải QR: ' + error.message);
             }
         }
 
-        // Lưu nội dung QR
         async function saveQrContent() {
             const contentInput = document.getElementById('qrContentInput');
             const newContent = contentInput.value.trim();
-            
             try {
                 await database.ref('qrContents/' + currentUser.username).set(newContent);
                 currentQrContent = newContent;
                 alert('✅ Đã lưu nội dung điểm danh!');
-                // Cập nhật lại QR (tái tạo)
                 await renderAdminView(document.getElementById('mainContainer'));
             } catch (error) {
                 alert('❌ Lỗi lưu: ' + error.message);
             }
         }
 
-        // ==================== GIAO DIỆN CHÍNH ====================
+        // Hàm thống kê theo nội dung QR
+        function renderQrContentStats(checkinList) {
+            const statsMap = new Map();
+            
+            checkinList.forEach(item => {
+                const content = item.qrContent || "(Không có nội dung)";
+                if (statsMap.has(content)) {
+                    statsMap.set(content, statsMap.get(content) + 1);
+                } else {
+                    statsMap.set(content, 1);
+                }
+            });
+            
+            if (statsMap.size === 0) {
+                return `<div class="no-data" style="padding:20px;">📭 Chưa có dữ liệu điểm danh để thống kê</div>`;
+            }
+            
+            let html = `<div class="qr-stats-grid">`;
+            for (let [content, count] of statsMap) {
+                const isEmpty = content === "(Không có nội dung)";
+                html += `
+                    <div class="qr-stat-card ${isEmpty ? 'qr-stat-empty' : ''}">
+                        <div class="qr-stat-title">📌 ${escapeHtml(content.length > 50 ? content.substring(0,50) + '...' : content)}</div>
+                        <div>
+                            <span class="qr-stat-count">${count}</span>
+                            <span class="qr-stat-label">lượt điểm danh</span>
+                        </div>
+                    </div>
+                `;
+            }
+            html += `</div>`;
+            return html;
+        }
+
         async function renderAdminView(container) {
             try {
-                // Lấy nội dung QR đã lưu
-                const contentSnapshot = await database.ref('qrContents/' + currentUser.username).once('value');
-                const savedQrContent = contentSnapshot.val() || "";
+                let savedQrContent = "";
+                try {
+                    const contentSnapshot = await database.ref('qrContents/' + currentUser.username).once('value');
+                    savedQrContent = contentSnapshot.val() || "";
+                } catch(e) {
+                    console.warn("Không thể đọc qrContents:", e);
+                }
                 currentQrContent = savedQrContent;
                 
-                // Lấy dữ liệu điểm danh
                 const snapshot = await database.ref('checkins/' + currentUser.username).once('value');
                 const userCheckinsData = snapshot.val() || {};
                 let checkinList = [];
@@ -576,7 +656,9 @@
                 const today = new Date().toLocaleDateString('vi-VN');
                 const todayCount = checkinList.filter(c => c.date === today).length;
                 
-                // Tạo link QR riêng
+                // Thống kê theo nội dung QR
+                const qrStatsHtml = renderQrContentStats(checkinList);
+                
                 const checkinUrl = window.location.origin + window.location.pathname + '?mode=checkin&user=' + encodeURIComponent(currentUser.username);
                 
                 container.innerHTML = `
@@ -588,7 +670,7 @@
                                 <label>📝 Nội dung điểm danh (Admin tự ghi)</label>
                                 <div class="flex-row">
                                     <input type="text" id="qrContentInput" placeholder="VD: Chào mừng năm học 2025 - Sự kiện 20/11" value="${escapeHtml(savedQrContent)}" style="flex:1;">
-                                    <button class="btn-save-content" onclick="saveQrContent()" style="padding:10px 20px;">💾 Lưu nội dung</button>
+                                    <button class="btn-save-content" onclick="saveQrContent()">💾 Lưu nội dung</button>
                                 </div>
                                 <small>✏️ Nội dung này sẽ hiển thị cho người quét QR và lưu vào mỗi bản ghi điểm danh</small>
                             </div>
@@ -603,7 +685,7 @@
                     </div>
                     
                     <div class="card">
-                        <h3>📊 Thống Kê</h3>
+                        <h3>📊 Thống Kê Tổng Quan</h3>
                         <div class="stats-grid">
                             <div class="stat-card">
                                 <h4>Tổng số lượt điểm danh</h4>
@@ -617,11 +699,20 @@
                     </div>
                     
                     <div class="card">
+                        <div class="section-title">
+                            📊📌 Thống Kê Theo Nội Dung QR
+                        </div>
+                        <div id="qrStatsContainer">
+                            ${qrStatsHtml}
+                        </div>
+                    </div>
+                    
+                    <div class="card">
                         <div class="flex-between">
-                            <h3>📋 Danh Sách Điểm Danh</h3>
+                            <h3>📋 Danh Sách Điểm Danh Chi Tiết</h3>
                             <button class="btn-export" id="exportExcelBtn">📎 Xuất Excel</button>
                         </div>
-                        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Tìm kiếm theo tên, lớp, chi đoàn...">
+                        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Tìm kiếm theo tên, lớp, chi đoàn, nội dung QR...">
                         <div class="table-wrapper">
                             <table class="data-table">
                                 <thead>
@@ -633,7 +724,6 @@
                     </div>
                 `;
                 
-                // Tạo QR Code
                 new QRCode(document.getElementById("qrcode"), {
                     text: checkinUrl,
                     width: 260,
@@ -647,7 +737,6 @@
                     navigator.clipboard.writeText(checkinUrl);
                     alert('Đã sao chép link điểm danh!');
                 };
-                
                 document.getElementById('downloadBtn').onclick = downloadQRCode;
                 
                 const renderTable = (filteredList) => {
@@ -664,7 +753,7 @@
                             <td>${escapeHtml(item.birthYear || '')}</td>
                             <td>${escapeHtml(item.class || '')}</td>
                             <td>${escapeHtml(item.union || '')}</td>
-                            <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(item.qrContent || '—')}</td>
+                            <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(item.qrContent || '')}">${escapeHtml(item.qrContent || '—')}</td>
                             <td>${item.note ? escapeHtml(item.note.substring(0,30)) : '—'}</td>
                             <td style="font-size:12px;">${escapeHtml(item.time || '')}</td>
                         </tr>
@@ -682,6 +771,14 @@
                         (c.qrContent && c.qrContent.toLowerCase().includes(term))
                     );
                     renderTable(filtered);
+                    
+                    // Cập nhật lại thống kê QR theo danh sách đã lọc
+                    const filteredStatsHtml = renderQrContentStats(filtered);
+                    const statsContainer = document.getElementById('qrStatsContainer');
+                    if (statsContainer) {
+                        statsContainer.innerHTML = filteredStatsHtml;
+                    }
+                    
                     const exportBtn = document.getElementById('exportExcelBtn');
                     if (exportBtn) {
                         exportBtn.onclick = (e) => {
@@ -713,7 +810,6 @@
             }); 
         }
         
-        // Xem chi tiết
         window.showDetail = async function(ownerUser, id) {
             const snapshot = await database.ref('checkins/' + ownerUser + '/' + id).once('value');
             const data = snapshot.val();
@@ -741,10 +837,8 @@
             modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
         };
         
-        // Gắn hàm saveQrContent vào window
         window.saveQrContent = saveQrContent;
         
-        // Khởi chạy
         render();
     </script>
 </body>
