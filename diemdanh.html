@@ -12,104 +12,208 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f1f5f9;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f3f4f6;
             min-height: 100vh;
+            color: #111827;
         }
 
-        /* Header */
+        /* Header mới tinh tế */
         .header {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: white;
-            padding: 14px 28px;
+            background: #ffffff;
+            backdrop-filter: blur(0px);
+            border-bottom: 1px solid #e9eef3;
+            padding: 0 32px;
+            height: 70px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.05);
         }
-        .header h2 { font-size: 1.35rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-        .user-info { display: flex; align-items: center; gap: 20px; background: rgba(255,255,255,0.08); padding: 6px 18px; border-radius: 40px; }
-        .logout-btn { background: rgba(255,255,255,0.15); padding: 6px 16px; border-radius: 30px; cursor: pointer; transition: 0.2s; font-size: 14px; }
-        .logout-btn:hover { background: rgba(255,255,255,0.25); }
+        .header h2 { 
+            font-size: 1.45rem; 
+            font-weight: 600; 
+            background: linear-gradient(135deg, #1E3A8A, #3B82F6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-info { 
+            display: flex; 
+            align-items: center; 
+            gap: 18px; 
+            background: #f8fafc;
+            padding: 6px 18px;
+            border-radius: 100px;
+            border: 1px solid #e2e8f0;
+        }
+        .user-info span:first-child {
+            font-weight: 500;
+            color: #1e293b;
+        }
+        .logout-btn { 
+            background: transparent; 
+            padding: 6px 14px; 
+            border-radius: 40px; 
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+        .logout-btn:hover { 
+            background: #fee2e2; 
+            color: #dc2626;
+            border-color: #fecaca;
+        }
 
-        /* Container */
-        .container { max-width: 1400px; margin: 20px auto; padding: 0 24px; }
+        /* Container rộng rãi */
+        .container { max-width: 1440px; margin: 28px auto; padding: 0 32px; }
 
-        /* Cards */
-        .card { background: white; border-radius: 24px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: box-shadow 0.2s; }
-        .card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
-        .card h3 { font-size: 1.25rem; margin-bottom: 18px; color: #0f172a; font-weight: 600; display: flex; align-items: center; gap: 10px; border-left: 4px solid #3b82f6; padding-left: 14px; }
+        /* Card hiện đại */
+        .card { 
+            background: white; 
+            border-radius: 28px; 
+            padding: 28px 32px; 
+            margin-bottom: 28px; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
+            border: 1px solid #edf2f7;
+            transition: box-shadow 0.2s;
+        }
+        .card:hover { box-shadow: 0 12px 28px rgba(0, 0, 0, 0.05); }
+        .card h3 { 
+            font-size: 1.25rem; 
+            margin-bottom: 22px; 
+            color: #0f172a; 
+            font-weight: 600; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            letter-spacing: -0.2px;
+        }
 
-        /* QR Section */
-        .qr-box { text-align: center; padding: 16px 20px; background: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0; }
-        #qrcode { display: inline-block; padding: 10px; background: white; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin: 8px 0; }
-        .qr-content-input { margin: 16px 0; text-align: left; }
-        .qr-content-input label { font-weight: 600; color: #0f172a; font-size: 13px; margin-bottom: 6px; display: block; }
-        .qr-content-input input { width: 100%; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 14px; transition: 0.2s; }
-        .qr-content-input input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        /* QR Section tinh gọn */
+        .qr-box { 
+            text-align: center; 
+            padding: 20px 24px; 
+            background: #fefefe; 
+            border-radius: 24px; 
+            border: 1px solid #eef2f6;
+        }
+        #qrcode { 
+            display: inline-block; 
+            padding: 12px; 
+            background: white; 
+            border-radius: 24px; 
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05); 
+            margin: 8px 0 16px;
+            border: 1px solid #eef2f8;
+        }
+        .qr-content-input { margin: 20px 0 10px; text-align: left; }
+        .qr-content-input label { 
+            font-weight: 600; 
+            color: #1e293b; 
+            font-size: 0.8rem; 
+            margin-bottom: 6px; 
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .qr-content-input input, .qr-content-input textarea { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 1.5px solid #e2edf2; 
+            border-radius: 18px; 
+            font-size: 0.9rem; 
+            transition: all 0.2s;
+            background: #ffffff;
+            font-family: inherit;
+        }
+        .qr-content-input input:focus, .qr-content-input textarea:focus { 
+            outline: none; 
+            border-color: #3b82f6; 
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
 
         /* Buttons */
-        .btn-primary, .btn-secondary, .btn-danger, .btn-outline, .btn-sm { border: none; cursor: pointer; font-weight: 500; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; justify-content: center; }
-        .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; padding: 10px 20px; border-radius: 40px; font-size: 14px; }
-        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59,130,246,0.4); }
-        .btn-secondary { background: #334155; color: white; padding: 8px 18px; border-radius: 40px; font-size: 13px; }
-        .btn-secondary:hover { background: #1e293b; }
-        .btn-danger { background: #ef4444; color: white; padding: 6px 14px; border-radius: 30px; font-size: 12px; }
-        .btn-danger:hover { background: #dc2626; }
-        .btn-outline { background: transparent; border: 1.5px solid #cbd5e1; color: #475569; padding: 6px 14px; border-radius: 30px; font-size: 12px; }
-        .btn-outline:hover { background: #f1f5f9; border-color: #3b82f6; color: #3b82f6; }
-        .btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 20px; }
+        .btn-primary, .btn-secondary, .btn-danger, .btn-outline, .btn-sm { 
+            border: none; 
+            cursor: pointer; 
+            font-weight: 500; 
+            transition: all 0.2s ease; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+            justify-content: center;
+            border-radius: 40px;
+        }
+        .btn-primary { 
+            background: #1f2937; 
+            color: white; 
+            padding: 10px 24px; 
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .btn-primary:hover { background: #111827; transform: translateY(-1px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
+        .btn-secondary { background: #f1f5f9; color: #1e293b; padding: 8px 20px; font-size: 0.8rem; border: 1px solid #e2e8f0; }
+        .btn-secondary:hover { background: #e6edf5; }
+        .btn-danger { background: #ffffff; color: #dc2626; padding: 6px 14px; font-size: 0.75rem; border: 1px solid #fee2e2; }
+        .btn-danger:hover { background: #fef2f2; border-color: #fecaca; }
+        .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: #475569; padding: 6px 14px; font-size: 0.75rem; border-radius: 30px; }
+        .btn-outline:hover { background: #f8fafc; border-color: #3b82f6; color: #2563eb; }
+        .btn-sm { padding: 5px 12px; font-size: 0.7rem; border-radius: 24px; }
 
         /* Stats */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-top: 8px; }
-        .stat-card { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 16px; border-radius: 20px; text-align: center; }
-        .stat-card .number { font-size: 32px; font-weight: 700; margin-top: 6px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 6px; }
+        .stat-card { background: #f9fafb; border-radius: 24px; padding: 20px; text-align: center; border: 1px solid #eef2f6; transition: all 0.2s; }
+        .stat-card h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: #5b6e8c; margin-bottom: 8px; }
+        .stat-card .number { font-size: 36px; font-weight: 700; color: #0f172a; margin-top: 6px; line-height: 1.2; }
 
         /* QR Stats */
-        .qr-stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 12px; }
-        .qr-stat-card { background: #f8fafc; border-radius: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid #3b82f6; transition: 0.2s; }
-        .qr-stat-card:hover { background: #f1f5f9; transform: translateX(2px); }
+        .qr-stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 16px; }
+        .qr-stat-card { background: #f9fafc; border-radius: 20px; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #edf2f7; transition: all 0.2s; }
+        .qr-stat-card:hover { background: #ffffff; border-color: #e2e8f0; transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.02); }
         .qr-stat-info { flex: 1; }
-        .qr-stat-title { font-weight: 600; color: #0f172a; font-size: 13px; word-break: break-word; }
-        .qr-stat-count { font-size: 24px; font-weight: 700; color: #3b82f6; margin-right: 12px; min-width: 50px; text-align: center; }
-        .qr-stat-actions { display: flex; gap: 8px; }
+        .qr-stat-title { font-weight: 600; color: #1e293b; font-size: 0.85rem; word-break: break-word; }
+        .qr-stat-count { font-size: 28px; font-weight: 700; color: #2563eb; margin-right: 16px; min-width: 52px; text-align: center; }
 
         /* Search & Table */
-        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
-        .search-box { padding: 10px 16px; border: 1.5px solid #e2e8f0; border-radius: 40px; font-size: 14px; width: 100%; max-width: 280px; transition: 0.2s; }
-        .search-box:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-        .table-wrapper { overflow-x: auto; border-radius: 16px; border: 1px solid #e2e8f0; background: white; }
-        .data-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 800px; }
-        .data-table th { background: #f8fafc; color: #1e293b; padding: 12px 12px; font-weight: 600; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        .data-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-        .data-table tr:hover { background: #f8fafc; }
-        .delete-icon { color: #94a3b8; cursor: pointer; transition: 0.2s; font-size: 18px; }
-        .delete-icon:hover { color: #ef4444; transform: scale(1.1); }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
+        .search-box { padding: 10px 18px; border: 1.5px solid #e2edf2; border-radius: 40px; font-size: 0.85rem; width: 100%; max-width: 280px; transition: 0.2s; background: #fff; }
+        .search-box:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.08); }
+        .table-wrapper { overflow-x: auto; border-radius: 20px; border: 1px solid #eff3f8; background: white; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 860px; }
+        .data-table th { background: #fcfdfe; color: #334155; padding: 14px 12px; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 1px solid #eef2f8; }
+        .data-table td { padding: 12px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; color: #1f2a3e; }
+        .data-table tr:hover { background: #fafcff; }
+        .delete-icon { color: #94a3b8; cursor: pointer; transition: 0.2s; font-size: 18px; opacity: 0.6; }
+        .delete-icon:hover { color: #ef4444; opacity: 1; transform: scale(1.05); }
 
         /* Modal */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(2px); }
-        .modal-content { background: white; border-radius: 28px; padding: 24px; max-width: 450px; width: 90%; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal-close { cursor: pointer; font-size: 24px; color: #94a3b8; }
-        .modal-buttons { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
-
-        .alert { padding: 12px; border-radius: 16px; margin-bottom: 16px; text-align: center; font-size: 13px; }
-        .alert-success { background: #d1fae5; color: #065f46; }
-        .alert-error { background: #fee2e2; color: #991b1b; }
-        .no-data { text-align: center; padding: 40px; color: #64748b; }
-        .loading { text-align: center; padding: 60px; color: #3b82f6; }
-        .badge { background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 20px; font-size: 11px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(3px); }
+        .modal-content { background: white; border-radius: 32px; padding: 28px; max-width: 460px; width: 90%; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-close { cursor: pointer; font-size: 24px; color: #94a3b8; transition: 0.1s; }
+        .modal-close:hover { color: #1e293b; }
+        .alert { padding: 14px; border-radius: 20px; margin-bottom: 16px; text-align: center; font-size: 0.8rem; font-weight: 500; }
+        .alert-success { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .alert-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+        .no-data { text-align: center; padding: 48px 20px; color: #6b7280; font-size: 0.85rem; }
+        .badge { background: #f1f5f9; color: #334155; padding: 4px 10px; border-radius: 30px; font-size: 0.7rem; font-weight: 500; display: inline-block; }
         .flex-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 
         @media (max-width: 640px) {
-            .container { padding: 0 16px; }
-            .card { padding: 18px; }
-            .header { padding: 12px 20px; }
+            .container { padding: 0 20px; margin: 20px auto; }
+            .card { padding: 20px; }
+            .header { padding: 0 20px; height: 64px; }
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -118,13 +222,13 @@
 </head>
 <body>
     <div class="header">
-        <h2>🎓 Điểm Danh QR</h2>
+        <h2>🎯 Điểm Danh QR</h2>
         <div class="user-info">
             <span id="userDisplay"></span>
-            <span class="logout-btn" onclick="logout()">🚪 Đăng xuất</span>
+            <span class="logout-btn" onclick="logout()">Đăng xuất</span>
         </div>
     </div>
-    <div class="container" id="mainContainer"><div class="loading">🔄 Đang tải...</div></div>
+    <div class="container" id="mainContainer"><div class="loading">Đang tải dữ liệu...</div></div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -147,7 +251,7 @@
             const userStr = localStorage.getItem('currentUser');
             if (!userStr) { window.location.href = 'index.html'; return false; }
             currentUser = JSON.parse(userStr);
-            document.getElementById('userDisplay').innerHTML = `👑 ${currentUser.username}`;
+            document.getElementById('userDisplay').innerHTML = `<span>👤 ${escapeHtml(currentUser.username)}</span>`;
             return true;
         }
         function logout() { localStorage.removeItem('currentUser'); window.location.href = 'index.html'; }
@@ -164,24 +268,24 @@
             await renderAdminView(container);
         }
 
-        // ========== FORM ĐIỂM DANH ==========
+        // ========== FORM ĐIỂM DANH gọn đẹp ==========
         async function renderCheckinForm(container) {
             const ownerUser = new URLSearchParams(window.location.search).get('user') || 'public';
             let qrContent = "";
             try { const snap = await database.ref('qrContents/' + ownerUser).once('value'); qrContent = snap.val() || ""; } catch(e) {}
             const todayDate = new Date().toLocaleDateString('vi-VN');
             container.innerHTML = `
-                <div class="card" style="max-width:500px; margin:0 auto;">
-                    <h2 style="text-align:center; margin-bottom:8px">📝 ĐIỂM DANH</h2>
-                    <p style="text-align:center; color:#475569; margin-bottom:20px;">📅 ${todayDate}</p>
-                    ${qrContent ? `<div class="alert alert-success" style="margin-bottom:20px;">📢 ${escapeHtml(qrContent)}</div>` : ''}
+                <div class="card" style="max-width:540px; margin:20px auto;">
+                    <h3 style="border-left:0; text-align:center;">📋 XÁC NHẬN ĐIỂM DANH</h3>
+                    <p style="text-align:center; color:#4b5563; margin-bottom:12px;">📅 ${todayDate}</p>
+                    ${qrContent ? `<div class="alert alert-success" style="margin-bottom:20px;">📌 ${escapeHtml(qrContent)}</div>` : ''}
                     <div id="alertMessage"></div>
-                    <div class="qr-content-input"><label>👤 Họ tên *</label><input type="text" id="fullName" placeholder="Nhập họ tên"></div>
-                    <div class="qr-content-input"><label>📅 Năm sinh *</label><input type="number" id="birthYear" placeholder="2005"></div>
-                    <div class="qr-content-input"><label>🏫 Lớp *</label><input type="text" id="class" placeholder="Tên lớp"></div>
-                    <div class="qr-content-input"><label>👥 Chi đoàn *</label><input type="text" id="union" placeholder="Chi đoàn"></div>
-                    <div class="qr-content-input"><label>📝 Ghi chú</label><textarea id="note" rows="2" placeholder="Ghi chú (nếu có)" style="width:100%; padding:10px; border-radius:14px; border:1.5px solid #e2e8f0;"></textarea></div>
-                    <button class="btn-primary" id="submitBtn" style="width:100%;">✅ XÁC NHẬN ĐIỂM DANH</button>
+                    <div class="qr-content-input"><label>👤 Họ và tên</label><input type="text" id="fullName" placeholder="Nguyễn Văn A"></div>
+                    <div class="qr-content-input"><label>📅 Năm sinh</label><input type="number" id="birthYear" placeholder="2005"></div>
+                    <div class="qr-content-input"><label>🏫 Lớp</label><input type="text" id="class" placeholder="12A1"></div>
+                    <div class="qr-content-input"><label>👥 Chi đoàn</label><input type="text" id="union" placeholder="Đoàn trường"></div>
+                    <div class="qr-content-input"><label>📝 Ghi chú (nếu có)</label><textarea id="note" rows="2" placeholder="...." style="width:100%; padding:12px; border-radius:18px; border:1.5px solid #e2edf2;"></textarea></div>
+                    <button class="btn-primary" id="submitBtn" style="width:100%; margin-top:10px; padding:12px;">✅ Xác nhận điểm danh</button>
                 </div>
             `;
             document.getElementById('submitBtn').onclick = () => submitCheckin(todayDate, qrContent, ownerUser);
@@ -204,33 +308,32 @@
             };
             try {
                 await database.ref('checkins/' + ownerUser + '/' + record.id).set(record);
-                alert('🎉 Điểm danh thành công!');
-                showAlert('✅ Thành công!', 'success');
+                showAlert('✅ Điểm danh thành công!', 'success');
                 document.getElementById('fullName').value = '';
                 document.getElementById('birthYear').value = '';
                 document.getElementById('class').value = '';
                 document.getElementById('union').value = '';
                 document.getElementById('note').value = '';
-            } catch (error) { alert('❌ Lỗi: ' + error.message); showAlert('Lỗi: ' + error.message, 'error'); }
+                setTimeout(() => showAlert('', ''), 2000);
+            } catch (error) { showAlert('❌ Lỗi: ' + error.message, 'error'); }
         }
         function showAlert(msg, type) {
             const div = document.getElementById('alertMessage');
-            if(div) { div.innerHTML = `<div class="alert alert-${type}">${msg}</div>`; setTimeout(() => div.innerHTML = '', 3000); }
+            if(div) { div.innerHTML = msg ? `<div class="alert alert-${type}">${msg}</div>` : ''; if(msg) setTimeout(() => div.innerHTML = '', 2800); }
         }
 
         // ========== XÓA DỮ LIỆU ==========
         async function deleteCheckin(ownerUser, id) {
-            if (!confirm('❌ Bạn có chắc muốn xóa bản ghi điểm danh này?')) return;
+            if (!confirm('Bạn có chắc muốn xóa bản ghi điểm danh này?')) return;
             try {
                 await database.ref('checkins/' + ownerUser + '/' + id).remove();
-                alert('✅ Đã xóa thành công!');
                 await renderAdminView(document.getElementById('mainContainer'));
-            } catch (error) { alert('❌ Lỗi: ' + error.message); }
+            } catch (error) { alert('Lỗi: ' + error.message); }
         }
 
         async function deleteByQrContent(ownerUser, qrContent) {
             const displayContent = qrContent || "(Không có nội dung)";
-            if (!confirm(`⚠️ Xóa TẤT CẢ điểm danh có nội dung:\n"${displayContent}"\n\nHành động này không thể hoàn tác!`)) return;
+            if (!confirm(`⚠️ Xóa TẤT CẢ điểm danh có nội dung: "${displayContent}"? Hành động không thể hoàn tác.`)) return;
             try {
                 const snapshot = await database.ref('checkins/' + ownerUser).once('value');
                 const data = snapshot.val() || {};
@@ -241,14 +344,12 @@
                     }
                 }
                 await Promise.all(promises);
-                alert(`✅ Đã xóa ${promises.length} bản ghi có nội dung "${displayContent}"`);
                 await renderAdminView(document.getElementById('mainContainer'));
-            } catch (error) { alert('❌ Lỗi: ' + error.message); }
+            } catch (error) { alert('Lỗi: ' + error.message); }
         }
 
-        // ========== XUẤT EXCEL ==========
         function exportToExcel(data, username) {
-            if (!data.length) { alert("Không có dữ liệu!"); return; }
+            if (!data.length) { alert("Không có dữ liệu để xuất!"); return; }
             const exportData = data.map(item => ({
                 "Ngày điểm danh": item.date, "Họ tên": item.fullName, "Năm sinh": item.birthYear,
                 "Lớp": item.class, "Chi đoàn": item.union, "Nội dung QR": item.qrContent, "Ghi chú": item.note, "Thời gian": item.time
@@ -263,32 +364,28 @@
             const el = document.getElementById('qrcode');
             if (!el) return;
             try {
-                const canvas = await html2canvas(el, { scale: 3, backgroundColor: '#fff' });
+                const canvas = await html2canvas(el, { scale: 3, backgroundColor: '#ffffff' });
                 const link = document.createElement('a');
                 link.download = `QR_${currentUser.username}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-                alert('✅ Đã tải QR!');
-            } catch (e) { alert('❌ Lỗi tải QR'); }
+            } catch (e) { alert('Không thể tải QR'); }
         }
 
         async function saveQrContent() {
             const newContent = document.getElementById('qrContentInput').value.trim();
             try {
                 await database.ref('qrContents/' + currentUser.username).set(newContent);
-                alert('✅ Đã lưu nội dung!');
                 await renderAdminView(document.getElementById('mainContainer'));
-            } catch (error) { alert('❌ Lỗi: ' + error.message); }
+            } catch (error) { alert('Lỗi: ' + error.message); }
         }
 
-        // ========== GIAO DIỆN ADMIN ==========
+        // ========== GIAO DIỆN ADMIN TINH TẾ ==========
         async function renderAdminView(container) {
             try {
-                // Lấy nội dung QR
                 let savedQrContent = "";
                 try { const snap = await database.ref('qrContents/' + currentUser.username).once('value'); savedQrContent = snap.val() || ""; } catch(e) {}
                 
-                // Lấy danh sách điểm danh
                 const snapshot = await database.ref('checkins/' + currentUser.username).once('value');
                 const data = snapshot.val() || {};
                 let checkins = Object.values(data).map(item => {
@@ -303,7 +400,6 @@
                 const todayCount = checkins.filter(c => c.date === today).length;
                 const checkinUrl = window.location.origin + window.location.pathname + '?mode=checkin&user=' + encodeURIComponent(currentUser.username);
                 
-                // Thống kê theo QR
                 const qrStats = new Map();
                 checkins.forEach(item => {
                     const content = item.qrContent || "(Không có nội dung)";
@@ -315,34 +411,33 @@
                     qrStatsHtml += `
                         <div class="qr-stat-card">
                             <div class="qr-stat-info">
-                                <div class="qr-stat-title">📌 ${escapeHtml(content.length > 45 ? content.substring(0,45)+'...' : content)}</div>
-                                <div class="badge" style="margin-top:4px;">${count} lượt</div>
+                                <div class="qr-stat-title">📌 ${escapeHtml(content.length > 50 ? content.substring(0,50)+'...' : content)}</div>
+                                <div class="badge" style="margin-top:6px;">${count} lượt</div>
                             </div>
                             <div class="qr-stat-actions">
-                                <button class="btn-outline btn-sm" onclick='deleteByQrContent("${currentUser.username}","${escapeHtml(content).replace(/'/g, "\\'")}")'>🗑️ Xóa ND</button>
+                                <button class="btn-outline btn-sm" onclick='deleteByQrContent("${currentUser.username}","${escapeHtml(content).replace(/'/g, "\\'")}")'>Xóa ND</button>
                             </div>
                         </div>
                     `;
                 }
                 qrStatsHtml += '</div>';
-                if (qrStats.size === 0) qrStatsHtml = '<div class="no-data" style="padding:20px;">📭 Chưa có dữ liệu</div>';
+                if (qrStats.size === 0) qrStatsHtml = '<div class="no-data">Chưa có dữ liệu theo nội dung</div>';
                 
                 container.innerHTML = `
                     <div class="card">
-                        <h3>📱 Mã QR của bạn</h3>
+                        <h3>📱 Mã QR điểm danh</h3>
                         <div class="qr-box">
                             <div id="qrcode"></div>
                             <div class="qr-content-input">
-                                <label>✏️ Nội dung điểm danh</label>
+                                <label>✏️ Nội dung mô tả (lưu kèm mỗi lượt điểm danh)</label>
                                 <div class="flex-row">
-                                    <input type="text" id="qrContentInput" placeholder="VD: Sự kiện 20/11 - Chào mừng..." value="${escapeHtml(savedQrContent)}" style="flex:1;">
-                                    <button class="btn-primary" onclick="saveQrContent()" style="padding:8px 18px;">💾 Lưu</button>
+                                    <input type="text" id="qrContentInput" placeholder="Ví dụ: Sự kiện 26/3 - Hội trại" value="${escapeHtml(savedQrContent)}" style="flex:1;">
+                                    <button class="btn-primary" onclick="saveQrContent()">Lưu nội dung</button>
                                 </div>
-                                <small>⚡ Nội dung này sẽ lưu vào mỗi bản ghi điểm danh</small>
+                                ${savedQrContent ? `<div class="alert alert-success" style="margin-top:12px;">📢 Nội dung hiện tại: ${escapeHtml(savedQrContent)}</div>` : ''}
                             </div>
-                            ${savedQrContent ? `<div class="alert alert-success" style="margin-top:12px;">📢 Nội dung hiện tại: ${escapeHtml(savedQrContent)}</div>` : ''}
-                            <div class="flex-row" style="justify-content:center; margin-top:12px;">
-                                <button class="btn-secondary" id="copyBtn">📋 Sao chép link</button>
+                            <div class="flex-row" style="justify-content:center; margin:18px 0 6px;">
+                                <button class="btn-secondary" id="copyBtn">🔗 Sao chép link</button>
                                 <button class="btn-secondary" id="downloadBtn">⬇️ Tải QR (PNG)</button>
                             </div>
                         </div>
@@ -351,52 +446,54 @@
                     <div class="card">
                         <h3>📊 Thống kê nhanh</h3>
                         <div class="stats-grid">
-                            <div class="stat-card"><h4>Tổng lượt</h4><div class="number">${checkins.length}</div></div>
+                            <div class="stat-card"><h4>Tổng lượt điểm danh</h4><div class="number">${checkins.length}</div></div>
                             <div class="stat-card"><h4>Hôm nay</h4><div class="number">${todayCount}</div></div>
                         </div>
                     </div>
                     
                     <div class="card">
-                        <h3>📊 Thống kê theo nội dung</h3>
+                        <h3>🏷️ Thống kê theo nội dung QR</h3>
                         ${qrStatsHtml}
                     </div>
                     
                     <div class="card">
                         <div class="flex-between">
-                            <h3>📋 Danh sách điểm danh</h3>
+                            <h3>📋 Lịch sử điểm danh</h3>
                             <div class="flex-row">
-                                <input type="text" id="searchInput" class="search-box" placeholder="🔍 Tìm kiếm...">
+                                <input type="text" id="searchInput" class="search-box" placeholder="Tìm kiếm theo tên, lớp, nội dung...">
                                 <button class="btn-primary" id="exportBtn">📎 Xuất Excel</button>
                             </div>
                         </div>
                         <div class="table-wrapper">
                             <table class="data-table">
-                                <thead><tr><th>Ngày</th><th>Họ tên</th><th>Năm sinh</th><th>Lớp</th><th>Chi đoàn</th><th>Nội dung QR</th><th>Ghi chú</th><th>Thời gian</th><th style="width:50px"></th></tr></thead>
+                                <thead>
+                                    <tr><th>Ngày</th><th>Họ tên</th><th>Năm sinh</th><th>Lớp</th><th>Chi đoàn</th><th>Nội dung QR</th><th>Ghi chú</th><th>Thời gian</th><th style="width:40px"></th></tr>
+                                </thead>
                                 <tbody id="tableBody"></tbody>
-                            }</table>
+                            </table>
                         </div>
                     </div>
                 `;
                 
-                new QRCode(document.getElementById("qrcode"), { text: checkinUrl, width: 230, height: 230, colorDark: "#0f172a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.Q });
-                document.getElementById('copyBtn').onclick = () => { navigator.clipboard.writeText(checkinUrl); alert('Đã sao chép link!'); };
+                new QRCode(document.getElementById("qrcode"), { text: checkinUrl, width: 210, height: 210, colorDark: "#0f172a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.Q });
+                document.getElementById('copyBtn').onclick = () => { navigator.clipboard.writeText(checkinUrl); alert('Đã sao chép liên kết điểm danh'); };
                 document.getElementById('downloadBtn').onclick = downloadQRCode;
                 
                 const renderTable = (list) => {
                     const tbody = document.getElementById('tableBody');
                     if (!tbody) return;
-                    if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="no-data">📭 Chưa có dữ liệu</td></tr>'; return; }
+                    if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="no-data">📭 Chưa có lượt điểm danh nào</td></tr>'; return; }
                     tbody.innerHTML = list.map(item => `
                         <tr>
-                            <td>${escapeHtml(item.date || '--')}</td>
+                            <td><span class="badge">${escapeHtml(item.date || '--')}</span></td>
                             <td><strong>${escapeHtml(item.fullName || '')}</strong></td>
                             <td>${escapeHtml(item.birthYear || '')}</td>
                             <td>${escapeHtml(item.class || '')}</td>
                             <td>${escapeHtml(item.union || '')}</td>
-                            <td style="max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(item.qrContent || '')}">${escapeHtml(item.qrContent || '—')}</td>
-                            <td>${escapeHtml(item.note ? item.note.substring(0,25) : '—')}</td>
-                            <td style="font-size:11px;">${escapeHtml(item.time || '')}</td>
-                            <td><span class="delete-icon" onclick="event.stopPropagation(); deleteCheckin('${currentUser.username}','${item.id}')">🗑️</span></td>
+                            <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(item.qrContent || '')}">${escapeHtml(item.qrContent ? (item.qrContent.length > 28 ? item.qrContent.substring(0,28)+'…' : item.qrContent) : '—')}</td>
+                            <td>${escapeHtml(item.note ? (item.note.length>22 ? item.note.substring(0,22)+'…' : item.note) : '—')}</td>
+                            <td style="font-size:0.7rem;">${escapeHtml(item.time || '')}</td>
+                            <td><span class="delete-icon" onclick="deleteCheckin('${currentUser.username}','${item.id}')">🗑️</span></td>
                         </tr>
                     `).join('');
                 };
@@ -417,7 +514,7 @@
                 
             } catch (error) {
                 console.error(error);
-                container.innerHTML = `<div class="loading" style="color:red;">❌ Lỗi: ${error.message}</div>`;
+                container.innerHTML = `<div class="card" style="color:#b91c1c;">⚠️ Lỗi tải dữ liệu: ${error.message}</div>`;
             }
         }
         
