@@ -92,6 +92,34 @@
             margin: 12px 0;
         }
 
+        .qr-content-input {
+            margin: 20px 0;
+            text-align: left;
+        }
+        .qr-content-input label {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .qr-content-input input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 20px;
+            font-size: 15px;
+        }
+        .qr-content-input input:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+        .qr-content-input small {
+            color: #64748b;
+            font-size: 12px;
+            margin-top: 6px;
+            display: block;
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -147,7 +175,7 @@
         }
         .btn-submit:hover { opacity: 0.9; }
 
-        .btn-copy, .btn-export {
+        .btn-copy, .btn-export, .btn-download {
             background: #2d3e6e;
             color: white;
             border: none;
@@ -160,10 +188,17 @@
             align-items: center;
             gap: 8px;
         }
+        .btn-download {
+            background: #059669;
+        }
         .btn-export {
             background: #2e7d32;
             margin-bottom: 20px;
             margin-left: 8px;
+        }
+        .btn-save-content {
+            background: #7c3aed;
+            margin-left: 12px;
         }
         .search-box {
             width: 100%;
@@ -185,7 +220,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 14px;
-            min-width: 700px;
+            min-width: 800px;
         }
         .data-table th {
             background: #f1f5f9;
@@ -259,11 +294,25 @@
             gap: 12px;
             margin-bottom: 20px;
         }
+        .flex-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
         .loading {
             text-align: center;
             padding: 60px;
             color: #2a5298;
             font-size: 18px;
+        }
+        .qr-note {
+            background: #fef3c7;
+            padding: 12px;
+            border-radius: 16px;
+            margin-top: 16px;
+            font-size: 13px;
+            color: #92400e;
         }
         @media (max-width: 680px) {
             .container { padding: 0 16px; }
@@ -272,6 +321,7 @@
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 </head>
 <body>
     <div class="header">
@@ -303,6 +353,7 @@
         const database = firebase.database();
 
         let currentUser = null;
+        let currentQrContent = ""; // Lưu nội dung QR hiện tại
 
         // Kiểm tra đăng nhập
         function checkAuth() {
@@ -340,11 +391,22 @@
 
         // ==================== FORM ĐIỂM DANH (Người quét QR) ====================
         async function renderCheckinForm(container) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ownerUser = urlParams.get('user') || 'public';
+            
+            // Lấy nội dung QR của chủ sở hữu
+            let qrContent = "";
+            try {
+                const contentSnapshot = await database.ref('qrContents/' + ownerUser).once('value');
+                qrContent = contentSnapshot.val() || "";
+            } catch(e) { console.error(e); }
+            
             const todayDate = new Date().toLocaleDateString('vi-VN');
             container.innerHTML = `
                 <div class="card">
                     <h2 style="text-align:center; margin-bottom:8px">📝 ĐIỂM DANH</h2>
                     <p style="text-align:center; color:#475569; margin-bottom:20px;">Ngày hôm nay: <strong>${todayDate}</strong></p>
+                    ${qrContent ? `<div class="qr-note" style="margin-bottom:20px;">📢 <strong>Nội dung điểm danh:</strong> ${escapeHtml(qrContent)}</div>` : ''}
                     <div id="alertMessage"></div>
                     <div class="form-group">
                         <label>👤 Họ và tên *</label>
@@ -369,10 +431,10 @@
                     <button class="btn-submit" id="submitBtn">✅ XÁC NHẬN ĐIỂM DANH</button>
                 </div>
             `;
-            document.getElementById('submitBtn').onclick = () => submitCheckin(todayDate);
+            document.getElementById('submitBtn').onclick = () => submitCheckin(todayDate, qrContent, ownerUser);
         }
 
-        async function submitCheckin(currentDateVi) {
+        async function submitCheckin(currentDateVi, qrContent, ownerUser) {
             const fullName = document.getElementById('fullName').value.trim();
             const birthYear = document.getElementById('birthYear').value;
             const className = document.getElementById('class').value.trim();
@@ -398,13 +460,11 @@
                 note: note,
                 time: timeFormatted,
                 timestamp: now.getTime(),
-                date: dateFormatted      // dd/mm/yyyy
+                date: dateFormatted,
+                qrContent: qrContent || ""  // Lưu nội dung QR vào mỗi bản ghi
             };
             
             try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const ownerUser = urlParams.get('user') || 'public';
-                // Lưu vào đúng tài khoản chủ sở hữu QR
                 await database.ref('checkins/' + ownerUser + '/' + checkinId).set(checkinRecord);
                 
                 alert('🎉 Điểm danh thành công!');
@@ -441,6 +501,7 @@
                 "Năm sinh": item.birthYear || "",
                 "Lớp": item.class || "",
                 "Chi đoàn": item.union || "",
+                "Nội dung QR": item.qrContent || "",
                 "Ghi chú": item.note || "",
                 "Thời gian chi tiết": item.time || ""
             }));
@@ -450,17 +511,59 @@
             XLSX.writeFile(wb, `DiemDanh_${username}_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.xlsx`);
         }
 
-        // ==================== GIAO DIỆN CHÍNH (Mỗi người dùng là Admin riêng) ====================
+        // Tải QR Code về máy
+        async function downloadQRCode() {
+            const qrcodeDiv = document.getElementById('qrcode');
+            if (!qrcodeDiv) return;
+            
+            try {
+                const canvas = await html2canvas(qrcodeDiv, {
+                    scale: 3,
+                    backgroundColor: '#ffffff'
+                });
+                const link = document.createElement('a');
+                const fileName = `QR_${currentUser.username}_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.png`;
+                link.download = fileName;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                alert('✅ Đã tải mã QR thành công!');
+            } catch (error) {
+                console.error(error);
+                alert('❌ Lỗi khi tải QR: ' + error.message);
+            }
+        }
+
+        // Lưu nội dung QR
+        async function saveQrContent() {
+            const contentInput = document.getElementById('qrContentInput');
+            const newContent = contentInput.value.trim();
+            
+            try {
+                await database.ref('qrContents/' + currentUser.username).set(newContent);
+                currentQrContent = newContent;
+                alert('✅ Đã lưu nội dung điểm danh!');
+                // Cập nhật lại QR (tái tạo)
+                await renderAdminView(document.getElementById('mainContainer'));
+            } catch (error) {
+                alert('❌ Lỗi lưu: ' + error.message);
+            }
+        }
+
+        // ==================== GIAO DIỆN CHÍNH ====================
         async function renderAdminView(container) {
             try {
-                // Lấy dữ liệu điểm danh của RIÊNG user đang đăng nhập
+                // Lấy nội dung QR đã lưu
+                const contentSnapshot = await database.ref('qrContents/' + currentUser.username).once('value');
+                const savedQrContent = contentSnapshot.val() || "";
+                currentQrContent = savedQrContent;
+                
+                // Lấy dữ liệu điểm danh
                 const snapshot = await database.ref('checkins/' + currentUser.username).once('value');
                 const userCheckinsData = snapshot.val() || {};
                 let checkinList = [];
                 
                 Object.values(userCheckinsData).forEach(item => {
                     if(item && typeof item === 'object'){
-                        // Đảm bảo có trường date (cho dữ liệu cũ)
                         if (!item.date && item.timestamp) {
                             const d = new Date(item.timestamp);
                             item.date = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
@@ -473,7 +576,7 @@
                 const today = new Date().toLocaleDateString('vi-VN');
                 const todayCount = checkinList.filter(c => c.date === today).length;
                 
-                // Tạo link QR riêng: mode=checkin&user=ten_dang_nhap
+                // Tạo link QR riêng
                 const checkinUrl = window.location.origin + window.location.pathname + '?mode=checkin&user=' + encodeURIComponent(currentUser.username);
                 
                 container.innerHTML = `
@@ -481,8 +584,20 @@
                         <h3>📱 Mã QR Điểm Danh Của Bạn</h3>
                         <div class="qr-box">
                             <div id="qrcode"></div>
+                            <div class="qr-content-input">
+                                <label>📝 Nội dung điểm danh (Admin tự ghi)</label>
+                                <div class="flex-row">
+                                    <input type="text" id="qrContentInput" placeholder="VD: Chào mừng năm học 2025 - Sự kiện 20/11" value="${escapeHtml(savedQrContent)}" style="flex:1;">
+                                    <button class="btn-save-content" onclick="saveQrContent()" style="padding:10px 20px;">💾 Lưu nội dung</button>
+                                </div>
+                                <small>✏️ Nội dung này sẽ hiển thị cho người quét QR và lưu vào mỗi bản ghi điểm danh</small>
+                            </div>
+                            ${savedQrContent ? `<div class="qr-note">📢 <strong>Nội dung hiện tại:</strong> ${escapeHtml(savedQrContent)}</div>` : ''}
                             <p style="margin:12px 0; color:#334155; word-break:break-all; background:#f1f5f9; padding:8px; border-radius:20px;">🔗 ${checkinUrl}</p>
-                            <button class="btn-copy" id="copyBtn">📋 Sao chép link QR</button>
+                            <div class="flex-row" style="justify-content:center;">
+                                <button class="btn-copy" id="copyBtn">📋 Sao chép link</button>
+                                <button class="btn-download" id="downloadBtn">⬇️ Tải mã QR (PNG)</button>
+                            </div>
                             <p style="margin-top:16px; font-size:13px; color:#5588a7;">✨ Học sinh quét mã này để điểm danh vào danh sách của bạn</p>
                         </div>
                     </div>
@@ -510,7 +625,7 @@
                         <div class="table-wrapper">
                             <table class="data-table">
                                 <thead>
-                                    <tr><th>Ngày điểm danh</th><th>Họ tên</th><th>Năm sinh</th><th>Lớp</th><th>Chi đoàn</th><th>Ghi chú</th><th>Thời gian</th></tr>
+                                    <tr><th>Ngày điểm danh</th><th>Họ tên</th><th>Năm sinh</th><th>Lớp</th><th>Chi đoàn</th><th>Nội dung QR</th><th>Ghi chú</th><th>Thời gian</th></tr>
                                 </thead>
                                 <tbody id="tableBody"></tbody>
                              </table>
@@ -533,11 +648,13 @@
                     alert('Đã sao chép link điểm danh!');
                 };
                 
+                document.getElementById('downloadBtn').onclick = downloadQRCode;
+                
                 const renderTable = (filteredList) => {
                     const tbody = document.getElementById('tableBody');
                     if (!tbody) return;
                     if (filteredList.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="7" class="no-data">📭 Chưa có lượt điểm danh nào</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="8" class="no-data">📭 Chưa có lượt điểm danh nào</td></tr>';
                         return;
                     }
                     tbody.innerHTML = filteredList.map(item => `
@@ -547,7 +664,8 @@
                             <td>${escapeHtml(item.birthYear || '')}</td>
                             <td>${escapeHtml(item.class || '')}</td>
                             <td>${escapeHtml(item.union || '')}</td>
-                            <td>${item.note ? escapeHtml(item.note.substring(0,40)) : '—'}</td>
+                            <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(item.qrContent || '—')}</td>
+                            <td>${item.note ? escapeHtml(item.note.substring(0,30)) : '—'}</td>
                             <td style="font-size:12px;">${escapeHtml(item.time || '')}</td>
                         </tr>
                     `).join('');
@@ -560,7 +678,8 @@
                         (c.fullName && c.fullName.toLowerCase().includes(term)) ||
                         (c.class && c.class.toLowerCase().includes(term)) ||
                         (c.union && c.union.toLowerCase().includes(term)) ||
-                        (c.date && c.date.includes(term))
+                        (c.date && c.date.includes(term)) ||
+                        (c.qrContent && c.qrContent.toLowerCase().includes(term))
                     );
                     renderTable(filtered);
                     const exportBtn = document.getElementById('exportExcelBtn');
@@ -612,6 +731,7 @@
                     <p><strong>🎓 Lớp:</strong> ${data.class}</p>
                     <p><strong>👥 Chi đoàn:</strong> ${data.union}</p>
                     <p><strong>📆 Ngày điểm danh:</strong> ${data.date || '---'}</p>
+                    <p><strong>📝 Nội dung QR:</strong> ${escapeHtml(data.qrContent) || 'Không có'}</p>
                     <p><strong>🕐 Thời gian:</strong> ${data.time}</p>
                     <p><strong>📝 Ghi chú:</strong> ${data.note || 'Không có'}</p>
                 </div>
@@ -620,6 +740,9 @@
             modal.style.display = 'flex';
             modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
         };
+        
+        // Gắn hàm saveQrContent vào window
+        window.saveQrContent = saveQrContent;
         
         // Khởi chạy
         render();
