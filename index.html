@@ -1,0 +1,347 @@
+<!-- index.html - ĐÃ SỬA LỖI ĐĂNG NHẬP -->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Điểm Danh QR - Đăng Nhập</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: #666;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .form-container {
+            padding: 30px;
+        }
+
+        .form {
+            display: none;
+        }
+
+        .form.active {
+            display: block;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            display: none;
+        }
+
+        .message.error {
+            background: #fee;
+            color: #c33;
+            display: block;
+        }
+
+        .message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            display: block;
+        }
+
+        .admin-info {
+            background: #e8f0fe;
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 15px;
+            text-align: center;
+            font-size: 13px;
+            color: #667eea;
+        }
+
+        @media (max-width: 480px) {
+            .form-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Hệ Thống Điểm Danh</h1>
+            <p>QR Code Attendance System</p>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('login')">Đăng Nhập</div>
+            <div class="tab" onclick="switchTab('register')">Đăng Ký</div>
+        </div>
+        
+        <div class="form-container">
+            <div id="loginForm" class="form active">
+                <div class="input-group">
+                    <label>📧 Tên đăng nhập</label>
+                    <input type="text" id="loginUsername" placeholder="Nhập tên đăng nhập" value="admin">
+                </div>
+                <div class="input-group">
+                    <label>🔒 Mật khẩu</label>
+                    <input type="password" id="loginPassword" placeholder="Nhập mật khẩu" value="admin123">
+                </div>
+                <button onclick="handleLogin()">Đăng Nhập</button>
+                <div id="loginMessage" class="message"></div>
+                <div class="admin-info">
+                    🔐 Tài khoản Admin: <strong>admin</strong> / <strong>admin123</strong>
+                </div>
+            </div>
+            
+            <div id="registerForm" class="form">
+                <div class="input-group">
+                    <label>👤 Tên đăng nhập</label>
+                    <input type="text" id="regUsername" placeholder="Chọn tên đăng nhập">
+                </div>
+                <div class="input-group">
+                    <label>🔒 Mật khẩu</label>
+                    <input type="password" id="regPassword" placeholder="Chọn mật khẩu">
+                </div>
+                <div class="input-group">
+                    <label>🔒 Xác nhận mật khẩu</label>
+                    <input type="password" id="regConfirmPassword" placeholder="Nhập lại mật khẩu">
+                </div>
+                <button onclick="handleRegister()">Đăng Ký</button>
+                <div id="registerMessage" class="message"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBrOrDdI-K-Ul2Z9UtfHATWlOALb6oRBZc",
+            authDomain: "diem-danh-c20d1.firebaseapp.com",
+            databaseURL: "https://diem-danh-c20d1-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "diem-danh-c20d1",
+            storageBucket: "diem-danh-c20d1.firebasestorage.app",
+            messagingSenderId: "417351044838",
+            appId: "1:417351044838:web:2f4c643e5774078a277527"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const ADMIN_USERNAME = "admin";
+        const ADMIN_PASSWORD = "admin123";
+
+        function switchTab(tab) {
+            const tabs = document.querySelectorAll('.tab');
+            const forms = document.querySelectorAll('.form');
+            tabs.forEach(t => t.classList.remove('active'));
+            forms.forEach(f => f.classList.remove('active'));
+            if (tab === 'login') {
+                tabs[0].classList.add('active');
+                document.getElementById('loginForm').classList.add('active');
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('registerForm').classList.add('active');
+            }
+            document.getElementById('loginMessage').className = 'message';
+            document.getElementById('registerMessage').className = 'message';
+        }
+
+        async function handleLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const messageDiv = document.getElementById('loginMessage');
+            
+            if (!username || !password) {
+                showMessage(messageDiv, 'Vui lòng nhập đầy đủ thông tin', 'error');
+                return;
+            }
+            
+            // Kiểm tra admin trước
+            if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+                localStorage.setItem('currentUser', JSON.stringify({
+                    username: ADMIN_USERNAME,
+                    role: 'admin'
+                }));
+                window.location.href = 'diemdanh.html';
+                return;
+            }
+            
+            // Kiểm tra user trong database
+            try {
+                const snapshot = await database.ref('users/' + username).once('value');
+                const userData = snapshot.val();
+                
+                if (userData && userData.password === password) {
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        username: username,
+                        role: 'user'
+                    }));
+                    window.location.href = 'diemdanh.html';
+                } else {
+                    showMessage(messageDiv, 'Sai tên đăng nhập hoặc mật khẩu', 'error');
+                }
+            } catch (error) {
+                console.error('Lỗi Firebase:', error);
+                showMessage(messageDiv, 'Lỗi kết nối database: ' + error.message, 'error');
+            }
+        }
+
+        async function handleRegister() {
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            const messageDiv = document.getElementById('registerMessage');
+            
+            if (!username || !password || !confirmPassword) {
+                showMessage(messageDiv, 'Vui lòng nhập đầy đủ thông tin', 'error');
+                return;
+            }
+            
+            if (username === ADMIN_USERNAME) {
+                showMessage(messageDiv, 'Tên đăng nhập không hợp lệ', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showMessage(messageDiv, 'Mật khẩu xác nhận không khớp', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showMessage(messageDiv, 'Mật khẩu phải có ít nhất 6 ký tự', 'error');
+                return;
+            }
+            
+            try {
+                const snapshot = await database.ref('users/' + username).once('value');
+                if (snapshot.exists()) {
+                    showMessage(messageDiv, 'Tên đăng nhập đã tồn tại', 'error');
+                    return;
+                }
+                
+                await database.ref('users/' + username).set({
+                    username: username,
+                    password: password,
+                    createdAt: new Date().toISOString()
+                });
+                
+                showMessage(messageDiv, 'Đăng ký thành công! Vui lòng đăng nhập.', 'success');
+                setTimeout(() => {
+                    switchTab('login');
+                    document.getElementById('loginUsername').value = username;
+                    document.getElementById('loginPassword').value = '';
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Lỗi:', error);
+                showMessage(messageDiv, 'Lỗi đăng ký: ' + error.message, 'error');
+            }
+        }
+        
+        function showMessage(element, text, type) {
+            element.textContent = text;
+            element.className = `message ${type}`;
+            setTimeout(() => {
+                element.className = 'message';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

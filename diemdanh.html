@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Điểm Danh QR - Hệ Thống</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header h2 {
+            font-size: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .qr-box {
+            text-align: center;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 15px;
+        }
+
+        #qrcode {
+            display: inline-block;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        #qrcode img {
+            margin: 0 auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-copy {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+        }
+
+        .checkin-item {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+        }
+
+        .checkin-item:hover {
+            background: #f0f0f0;
+        }
+
+        .checkin-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .checkin-detail {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #4caf50;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-left: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-modal {
+            cursor: pointer;
+            font-size: 24px;
+            color: #999;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h2>🎓 Hệ Thống Điểm Danh QR</h2>
+        <div class="user-info">
+            <span id="userDisplay"></span>
+            <span class="logout-btn" onclick="logout()">🚪 Đăng Xuất</span>
+        </div>
+    </div>
+    
+    <div class="container" id="mainContainer">
+        <div class="loading">Đang tải...</div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBrOrDdI-K-Ul2Z9UtfHATWlOALb6oRBZc",
+            authDomain: "diem-danh-c20d1.firebaseapp.com",
+            databaseURL: "https://diem-danh-c20d1-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "diem-danh-c20d1",
+            storageBucket: "diem-danh-c20d1.firebasestorage.app",
+            messagingSenderId: "417351044838",
+            appId: "1:417351044838:web:2f4c643e5774078a277527"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let currentUser = null;
+
+        function checkAuth() {
+            const userStr = localStorage.getItem('currentUser');
+            if (!userStr) {
+                window.location.href = 'index.html';
+                return false;
+            }
+            currentUser = JSON.parse(userStr);
+            document.getElementById('userDisplay').innerHTML = currentUser.role === 'admin' ? '👑 Admin' : `👤 ${currentUser.username}`;
+            return true;
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        }
+
+        async function render() {
+            if (!checkAuth()) return;
+            
+            const container = document.getElementById('mainContainer');
+            const urlParams = new URLSearchParams(window.location.search);
+            const mode = urlParams.get('mode');
+            
+            try {
+                if (mode === 'checkin') {
+                    await renderCheckinForm(container);
+                } else if (currentUser.role === 'admin') {
+                    await renderAdminView(container);
+                } else {
+                    await renderUserView(container);
+                }
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = '<div class="loading" style="color:red;">Có lỗi xảy ra: ' + error.message + '</div>';
+            }
+        }
+
+        // Form điểm danh
+        async function renderCheckinForm(container) {
+            container.innerHTML = `
+                <div class="card">
+                    <h2 style="text-align:center; margin-bottom:20px">📝 ĐIỂM DANH</h2>
+                    <div id="alertMessage"></div>
+                    <div class="form-group">
+                        <label>👤 Họ và tên *</label>
+                        <input type="text" id="fullName" placeholder="Nhập họ tên đầy đủ">
+                    </div>
+                    <div class="form-group">
+                        <label>📅 Năm sinh *</label>
+                        <input type="number" id="birthYear" placeholder="VD: 2005">
+                    </div>
+                    <div class="form-group">
+                        <label>🏫 Lớp *</label>
+                        <input type="text" id="class" placeholder="Nhập tên lớp">
+                    </div>
+                    <div class="form-group">
+                        <label>👥 Chi đoàn *</label>
+                        <input type="text" id="union" placeholder="Nhập tên chi đoàn">
+                    </div>
+                    <div class="form-group">
+                        <label>📝 Ghi chú</label>
+                        <textarea id="note" rows="3" placeholder="Ghi chú thêm (nếu có)"></textarea>
+                    </div>
+                    <button class="btn-submit" id="submitBtn">✅ XÁC NHẬN ĐIỂM DANH</button>
+                </div>
+            `;
+            
+            document.getElementById('submitBtn').onclick = submitCheckin;
+        }
+
+        async function submitCheckin() {
+            const fullName = document.getElementById('fullName').value.trim();
+            const birthYear = document.getElementById('birthYear').value;
+            const className = document.getElementById('class').value.trim();
+            const union = document.getElementById('union').value.trim();
+            const note = document.getElementById('note').value;
+            
+            if (!fullName || !birthYear || !className || !union) {
+                showAlert('Vui lòng điền đầy đủ thông tin (*)', 'error');
+                return;
+            }
+            
+            const now = new Date();
+            const checkinId = now.getTime().toString();
+            const checkinRecord = {
+                id: checkinId,
+                fullName: fullName,
+                birthYear: birthYear,
+                class: className,
+                union: union,
+                note: note,
+                time: now.toLocaleString('vi-VN'),
+                timestamp: now.getTime(),
+                date: now.toLocaleDateString('vi-VN')
+            };
+            
+            try {
+                await database.ref('checkins/' + checkinId).set(checkinRecord);
+                
+                // Hiển thị thông báo dạng Alert của hệ thống để chắc chắn người dùng nhìn thấy
+                alert('🎉 Điểm danh thành công!');
+                showAlert('✅ Điểm danh thành công!', 'success');
+                
+                document.getElementById('fullName').value = '';
+                document.getElementById('birthYear').value = '';
+                document.getElementById('class').value = '';
+                document.getElementById('union').value = '';
+                document.getElementById('note').value = '';
+                
+            } catch (error) {
+                alert('❌ Lỗi điểm danh: ' + error.message);
+                showAlert('❌ Lỗi: ' + error.message, 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alertMessage');
+            if(alertDiv) {
+                alertDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+                setTimeout(() => {
+                    alertDiv.innerHTML = '';
+                }, 4000);
+            }
+        }
+
+        // Admin View
+        async function renderAdminView(container) {
+            try {
+                const snapshot = await database.ref('checkins').once('value');
+                const checkins = snapshot.val() || {};
+                const checkinList = Object.values(checkins).sort((a, b) => b.timestamp - a.timestamp);
+                
+                const today = new Date().toLocaleDateString('vi-VN');
+                const todayCount = checkinList.filter(c => c.date === today).length;
+                
+                const currentUrl = window.location.href.split('?')[0];
+                const checkinUrl = currentUrl + '?mode=checkin';
+                
+                container.innerHTML = `
+                    <div class="card">
+                        <h3>📱 Mã QR Điểm Danh</h3>
+                        <div class="qr-box">
+                            <div id="qrcode"></div>
+                            <p style="margin:15px 0; color:#666; word-break:break-all">Link: ${checkinUrl}</p>
+                            <button class="btn-copy" id="copyBtn">📋 Sao chép link</button>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>📊 Thống Kê</h3>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <h4>Tổng số lượt điểm danh</h4>
+                                <div class="number">${checkinList.length}</div>
+                            </div>
+                            <div class="stat-card">
+                                <h4>Điểm danh hôm nay</h4>
+                                <div class="number">${todayCount}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>📋 Danh Sách Điểm Danh</h3>
+                        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Tìm kiếm...">
+                        <div id="checkinList"></div>
+                    </div>
+                `;
+                
+                // Cấu hình lại để tăng mức độ sửa lỗi (Correct Level Q) giúp quét bằng điện thoại siêu nhạy
+                new QRCode(document.getElementById("qrcode"), {
+                    text: checkinUrl,
+                    width: 250,
+                    height: 250,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.Q
+                });
+                
+                document.getElementById('copyBtn').onclick = () => {
+                    navigator.clipboard.writeText(checkinUrl);
+                    alert('Đã sao chép link!');
+                };
+                
+                renderCheckinList(checkinList, '');
+                
+                document.getElementById('searchInput').oninput = (e) => {
+                    renderCheckinList(checkinList, e.target.value.toLowerCase());
+                };
+                
+            } catch (error) {
+                container.innerHTML = '<div class="loading" style="color:red;">Lỗi tải dữ liệu: ' + error.message + '</div>';
+            }
+        }
+
+        function renderCheckinList(checkins, searchTerm) {
+            const container = document.getElementById('checkinList');
+            if (!container) return;
+            
+            const filtered = checkins.filter(c => 
+                searchTerm === '' || 
+                (c.fullName && c.fullName.toLowerCase().includes(searchTerm)) ||
+                (c.class && c.class.toLowerCase().includes(searchTerm)) ||
+                (c.union && c.union.toLowerCase().includes(searchTerm))
+            );
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="no-data">📭 Chưa có lượt điểm danh nào</div>';
+                return;
+            }
+            
+            container.innerHTML = filtered.map(c => `
+                <div class="checkin-item" onclick='showDetail("${c.id}")'>
+                    <div class="checkin-name">
+                        👤 ${c.fullName}
+                        <span class="badge">${c.date}</span>
+                    </div>
+                    <div class="checkin-detail">
+                        📅 ${c.birthYear} | 🎓 ${c.class} | 👥 ${c.union}
+                    </div>
+                    <div class="checkin-detail">
+                        🕐 ${c.time}
+                        ${c.note ? ` | 📝 ${c.note}` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.showDetail = async function(id) {
+            const snapshot = await database.ref('checkins/' + id).once('value');
+            const data = snapshot.val();
+            if (!data) return;
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>📋 Chi Tiết Điểm Danh</h3>
+                        <span class="close-modal" onclick="this.closest('.modal').remove()">&times;</span>
+                    </div>
+                    <p><strong>👤 Họ tên:</strong> ${data.fullName}</p>
+                    <p><strong>📅 Năm sinh:</strong> ${data.birthYear}</p>
+                    <p><strong>🎓 Lớp:</strong> ${data.class}</p>
+                    <p><strong>👥 Chi đoàn:</strong> ${data.union}</p>
+                    <p><strong>🕐 Thời gian:</strong> ${data.time}</p>
+                    <p><strong>📝 Ghi chú:</strong> ${data.note || 'Không có'}</p>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.style.display = 'flex';
+            modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+        };
+
+        // User View
+        async function renderUserView(container) {
+            const snapshot = await database.ref('users/' + currentUser.username).once('value');
+            const userData = snapshot.val() || {};
+            
+            const currentUrl = window.location.href.split('?')[0];
+            const checkinUrl = currentUrl + '?mode=checkin';
+            
+            container.innerHTML = `
+                <div class="card">
+                    <h3>👤 Thông Tin Cá Nhân</h3>
+                    <p><strong>Tên đăng nhập:</strong> ${currentUser.username}</p>
+                    <p><strong>Ngày đăng ký:</strong> ${userData.createdAt ? new Date(userData.createdAt).toLocaleString('vi-VN') : 'Chưa rõ'}</p>
+                </div>
+                <div class="card">
+                    <h3>📋 Hướng Dẫn Điểm Danh</h3>
+                    <p>1️⃣ Quét mã QR do admin cung cấp</p>
+                    <p>2️⃣ Hoặc truy cập link: <a href="${checkinUrl}" target="_blank" style="color:#667eea">${checkinUrl}</a></p>
+                    <p>3️⃣ Nhập đầy đủ thông tin</p>
+                    <p>4️⃣ Nhấn "Xác nhận điểm danh"</p>
+                </div>
+            `;
+        }
+
+        // Chạy
+        checkAuth();
+        render();
+    </script>
+</body>
+</html>
