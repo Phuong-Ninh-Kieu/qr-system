@@ -304,14 +304,13 @@
 
         let currentUser = null;
 
-        // Hàm hiển thị nội dung cập nhật hệ thống
         function showUpdateLogs() {
             alert(
                 "🚀 NỘI DUNG CẬP NHẬT HỆ THỐNG:\n" +
                 "====================================\n\n" +
-                "+ Thêm thời gian bắt đầu và kết thúc điểm danh.\n" +
+                "+ Sửa triệt để logic kiểm tra giới hạn thời gian quét (Chuyển đổi sang số phút tuyệt đối tính từ đầu ngày).\n" +
                 "+ Admin được cấp quyền tự điểm danh hộ người khác.\n" +
-                "+ Mỗi máy điện thoại chỉ được Điểm danh 1 lần (Nếu điểm danh hộ, Admin có toàn quyền xóa điểm danh).\n" +
+                "+ Mỗi máy điện thoại chỉ được Điểm danh 1 lần.\n" +
                 "+ Xuất thành công danh sách điểm danh Trùng lặp ra file Excel."
             );
         }
@@ -348,13 +347,18 @@
             await renderAdminView(container);
         }
 
-        // Helper tạo object ngày giờ để so sánh chính xác tuyệt đối
-        function parseTimeString(timeStr) {
+        // CHUYỂN ĐỔI CHUỖI "HH:MM" THÀNH TỔNG SỐ PHÚT TUYỆT ĐỐI (Ví dụ "08:30" -> 510 phút)
+        function timeToMinutes(timeStr) {
             if (!timeStr) return null;
-            const [hours, minutes] = timeStr.split(':').map(Number);
-            const d = new Date();
-            d.setHours(hours, minutes, 0, 0);
-            return d;
+            const parts = timeStr.split(':');
+            if (parts.length < 2) return null;
+            return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+        }
+
+        // LẤY TỔNG SỐ PHÚT HIỆN TẠI CỦA THỜI GIAN THỰC MÁY TÍNH/ĐIỆN THOẠI
+        function getCurrentMinutes() {
+            const now = new Date();
+            return now.getHours() * 60 + now.getMinutes();
         }
 
         // ========== FORM ĐIỂM DANH CLIENT ==========
@@ -375,20 +379,20 @@
             
             const todayDate = new Date().toLocaleDateString('vi-VN');
             
-            // Kiểm tra thời gian thực tế ở phía Client
+            // Logic kiểm tra thời gian thực tế chuẩn xác bằng tổng số phút
             let isTimeValid = true;
             let timeErrorMsg = "";
-            const now = new Date();
             
-            const startLimit = parseTimeString(qrData.startTime);
-            const endLimit = parseTimeString(qrData.endTime);
+            const currentMinutes = getCurrentMinutes();
+            const startMinutes = timeToMinutes(qrData.startTime);
+            const endMinutes = timeToMinutes(qrData.endTime);
             
-            if (startLimit && now < startLimit) {
+            if (startMinutes !== null && currentMinutes < startMinutes) {
                 isTimeValid = false;
                 timeErrorMsg = `⏳ Chưa đến thời gian điểm danh. Vui lòng quay lại lúc: <b>${qrData.startTime}</b>`;
-            } else if (endLimit && now > endLimit) {
+            } else if (endMinutes !== null && currentMinutes > endMinutes) {
                 isTimeValid = false;
-                timeErrorMsg = `🛑 Đã hết thời gian cho phép điểm danh (Hạn chót: <b>${qrData.endTime}</b>)`;
+                timeErrorMsg = `🛑 Đã hết thời gian cho phép điểm danh (Hạn chót là: <b>${qrData.endTime}</b>)`;
             }
 
             container.innerHTML = `
@@ -424,15 +428,15 @@
         }
 
         async function submitCheckin(date, qrContent, ownerUser, startTime, endTime) {
-            const nowTime = new Date();
-            const startLimit = parseTimeString(startTime);
-            const endLimit = parseTimeString(endTime);
+            const currentMinutes = getCurrentMinutes();
+            const startMinutes = timeToMinutes(startTime);
+            const endMinutes = timeToMinutes(endTime);
             
-            if (startLimit && nowTime < startLimit) {
+            if (startMinutes !== null && currentMinutes < startMinutes) {
                 showAlert(`⏳ Lỗi: Chưa đến giờ điểm danh (Bắt đầu từ: ${startTime})`, 'error');
                 return;
             }
-            if (endLimit && nowTime > endLimit) {
+            if (endMinutes !== null && currentMinutes > endMinutes) {
                 showAlert(`🛑 Thất bại: Đã quá thời gian điểm danh ấn định! (Hạn cuối: ${endTime})`, 'error');
                 if(document.getElementById('formFields')) document.getElementById('formFields').style.display = 'none';
                 return;
@@ -649,17 +653,19 @@
             } catch (e) { alert('Lỗi tải xuống ảnh QR'); }
         }
 
-        // CHỨC NĂNG KIỂM TRA THỜI GIAN NGAY KHI ADMIN LƯU CẤU HÌNH
+        // KIỂM TRA CHẶT CHẼ LOGIC THỜI GIAN KHI ADMIN LƯU CẤU HÌNH
         async function saveQrContent() {
             const newContent = document.getElementById('qrContentInput').value.trim();
             const startTime = document.getElementById('startTimeInput').value;
             const endTime = document.getElementById('endTimeInput').value;
             
-            // Thực hiện kiểm tra logic thời gian
-            if (startTime && endTime) {
-                if (startTime >= endTime) {
+            const startMins = timeToMinutes(startTime);
+            const endMins = timeToMinutes(endTime);
+
+            if (startMins !== null && endMins !== null) {
+                if (startMins >= endMins) {
                     alert('⚠️ Lỗi cấu hình thời gian:\nGiờ bắt đầu điểm danh phải nhỏ hơn Giờ kết thúc điểm danh!');
-                    return; // Ngắt luồng dữ liệu, không cho lưu lên Firebase
+                    return;
                 }
             }
 
@@ -676,7 +682,6 @@
             } catch (error) { alert('Lỗi: ' + error.message); }
         }
 
-        // Hàm xử lý tải lại dữ liệu ngầm mượt mà
         async function refreshDataSmooth() {
             const refreshBtn = document.getElementById('refreshBtn');
             if (refreshBtn) refreshBtn.classList.add('spinning');
@@ -881,6 +886,7 @@
                                         <label>Nội dung đính kèm lượt quét</label>
                                         <input type="text" id="qrContentInput" placeholder="Ví dụ: Đại hội chi đoàn..." value="${escapeHtml(savedQrContent)}">
                                         
+                                        <!-- Khung giờ bắt đầu & kết thúc -->
                                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
                                             <div>
                                                 <label style="font-size: 0.75rem;">Giờ bắt đầu</label>
