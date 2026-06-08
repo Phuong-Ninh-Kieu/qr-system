@@ -19,7 +19,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Header Hiện Đại & Gọn Gàng - Thu nhỏ chiều cao */
+        /* Header Hiện Đại & Gọn Gàng */
         .header {
             background: #ffffff;
             border-bottom: 1px solid #e2e8f0;
@@ -65,7 +65,27 @@
             background: #fef2f2; 
         }
 
-        /* Layout Grid Thu nhỏ khoảng cách để vừa vặn trang */
+        /* Nút Nội dung cập nhật thiết kế tinh tế */
+        .btn-update-info {
+            background: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 10px;
+        }
+        .btn-update-info:hover {
+            background: #dbeafe;
+        }
+
+        /* Layout Grid */
         .container { 
             max-width: 1350px; 
             margin: 20px auto; 
@@ -79,7 +99,7 @@
             align-items: start;
         }
 
-        /* Card Thiết Kế Tối Giản - Giảm padding */
+        /* Card Thiết Kế Tối Giản */
         .card { 
             background: #ffffff; 
             border-radius: 12px; 
@@ -100,7 +120,7 @@
             gap: 6px;
         }
 
-        /* Khu Vực QR Đẹp Mắt */
+        /* Khu Vực QR */
         .qr-box { 
             text-align: center; 
             padding: 12px;
@@ -141,7 +161,7 @@
             box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
         }
 
-        /* Hệ Thống Nút Thu nhỏ kích thước */
+        /* Hệ Thống Nút */
         .btn-primary, .btn-secondary, .btn-danger, .btn-outline, .btn-warning { 
             border: none; 
             cursor: pointer; 
@@ -166,7 +186,7 @@
         .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: #475569; padding: 4px 10px; font-size: 0.75rem; }
         .btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
 
-        /* Icon tải lại (2 mũi tên xoay tròn) kế bên Tiêu đề */
+        /* Icon tải lại */
         .btn-refresh {
             background: transparent;
             border: none;
@@ -209,7 +229,7 @@
         .qr-stat-title { font-weight: 600; color: #334155; font-size: 0.8rem; word-break: break-word; }
         .qr-stat-count { font-size: 1rem; font-weight: 700; color: #2563eb; margin-left: 10px; }
 
-        /* Bộ Lọc & Bảng Dữ Liệu - Giảm size chữ và padding */
+        /* Bộ Lọc & Bảng Dữ Liệu */
         .flex-between { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
         .search-box { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; width: 200px; transition: 0.2s; }
         .search-box:focus { outline: none; border-color: #2563eb; }
@@ -253,7 +273,10 @@
 </head>
 <body>
     <div class="header">
-        <h2>🎯 Điểm Danh QR</h2>
+        <h2>
+            🎯 Điểm Danh QR
+            <button class="btn-update-info" id="updateInfoBtn" onclick="showUpdateLogs()">✨ Nội dung cập nhật</button>
+        </h2>
         <div class="user-info">
             <span id="userDisplay"></span>
             <span class="logout-btn" onclick="logout()">Đăng xuất</span>
@@ -280,6 +303,18 @@
         const database = firebase.database();
 
         let currentUser = null;
+
+        // Hàm hiển thị nội dung cập nhật hệ thống
+        function showUpdateLogs() {
+            alert(
+                "🚀 NỘI DUNG CẬP NHẬT HỆ THỐNG:\n" +
+                "====================================\n\n" +
+                "+ Thêm thời gian bắt đầu và kết thúc điểm danh.\n" +
+                "+ Admin được cấp quyền tự điểm danh hộ người khác.\n" +
+                "+ Mỗi máy điện thoại chỉ được Điểm danh 1 lần (Nếu điểm danh hộ, Admin có toàn quyền xóa điểm danh).\n" +
+                "+ Xuất thành công danh sách điểm danh Trùng lặp ra file Excel."
+            );
+        }
 
         function getDeviceFingerprint() {
             const navigatorInfo = window.navigator.userAgent + window.navigator.language + window.screen.colorDepth + window.screen.width + window.screen.height;
@@ -313,6 +348,15 @@
             await renderAdminView(container);
         }
 
+        // Helper tạo object ngày giờ để so sánh chính xác tuyệt đối
+        function parseTimeString(timeStr) {
+            if (!timeStr) return null;
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            const d = new Date();
+            d.setHours(hours, minutes, 0, 0);
+            return d;
+        }
+
         // ========== FORM ĐIỂM DANH CLIENT ==========
         async function renderCheckinForm(container) {
             const ownerUser = new URLSearchParams(window.location.search).get('user') || 'public';
@@ -331,16 +375,18 @@
             
             const todayDate = new Date().toLocaleDateString('vi-VN');
             
-            // Kiểm tra thời gian điểm danh ngay khi load form client
+            // Kiểm tra thời gian thực tế ở phía Client
             let isTimeValid = true;
             let timeErrorMsg = "";
             const now = new Date();
-            const currentHourMin = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
             
-            if (qrData.startTime && currentHourMin < qrData.startTime) {
+            const startLimit = parseTimeString(qrData.startTime);
+            const endLimit = parseTimeString(qrData.endTime);
+            
+            if (startLimit && now < startLimit) {
                 isTimeValid = false;
                 timeErrorMsg = `⏳ Chưa đến thời gian điểm danh. Vui lòng quay lại lúc: <b>${qrData.startTime}</b>`;
-            } else if (qrData.endTime && currentHourMin > qrData.endTime) {
+            } else if (endLimit && now > endLimit) {
                 isTimeValid = false;
                 timeErrorMsg = `🛑 Đã hết thời gian cho phép điểm danh (Hạn chót: <b>${qrData.endTime}</b>)`;
             }
@@ -378,17 +424,16 @@
         }
 
         async function submitCheckin(date, qrContent, ownerUser, startTime, endTime) {
-            // Kiểm tra lại thời gian một lần nữa lúc nhấn nút gửi đề phòng Client mở ngâm form quá hạn
             const nowTime = new Date();
-            const currentHourMin = `${nowTime.getHours().toString().padStart(2, '0')}:${nowTime.getMinutes().toString().padStart(2, '0')}`;
+            const startLimit = parseTimeString(startTime);
+            const endLimit = parseTimeString(endTime);
             
-            if (startTime && currentHourMin < startTime) {
+            if (startLimit && nowTime < startLimit) {
                 showAlert(`⏳ Lỗi: Chưa đến giờ điểm danh (Bắt đầu từ: ${startTime})`, 'error');
                 return;
             }
-            if (endTime && currentHourMin > endTime) {
+            if (endLimit && nowTime > endLimit) {
                 showAlert(`🛑 Thất bại: Đã quá thời gian điểm danh ấn định! (Hạn cuối: ${endTime})`, 'error');
-                // Ẩn form đi để không bấm lại được nữa
                 if(document.getElementById('formFields')) document.getElementById('formFields').style.display = 'none';
                 return;
             }
@@ -604,11 +649,20 @@
             } catch (e) { alert('Lỗi tải xuống ảnh QR'); }
         }
 
+        // CHỨC NĂNG KIỂM TRA THỜI GIAN NGAY KHI ADMIN LƯU CẤU HÌNH
         async function saveQrContent() {
             const newContent = document.getElementById('qrContentInput').value.trim();
             const startTime = document.getElementById('startTimeInput').value;
             const endTime = document.getElementById('endTimeInput').value;
             
+            // Thực hiện kiểm tra logic thời gian
+            if (startTime && endTime) {
+                if (startTime >= endTime) {
+                    alert('⚠️ Lỗi cấu hình thời gian:\nGiờ bắt đầu điểm danh phải nhỏ hơn Giờ kết thúc điểm danh!');
+                    return; // Ngắt luồng dữ liệu, không cho lưu lên Firebase
+                }
+            }
+
             const qrObject = {
                 content: newContent,
                 startTime: startTime,
@@ -650,7 +704,6 @@
                     statusAlertArea.innerHTML = savedQrContent ? `<div class="alert alert-success" style="margin-top:10px; padding:6px 12px; font-size:0.8rem; text-align:left;">📍 Nội dung hiện tại: ${escapeHtml(savedQrContent)}${timeText}</div>` : '';
                 }
 
-                // Cập nhật giá trị vào input Admin nếu có
                 if(document.getElementById('startTimeInput') && !document.getElementById('startTimeInput').value) {
                     document.getElementById('startTimeInput').value = startTime;
                 }
@@ -828,7 +881,6 @@
                                         <label>Nội dung đính kèm lượt quét</label>
                                         <input type="text" id="qrContentInput" placeholder="Ví dụ: Đại hội chi đoàn..." value="${escapeHtml(savedQrContent)}">
                                         
-                                        <!-- Thêm cấu hình thời gian điểm danh -->
                                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
                                             <div>
                                                 <label style="font-size: 0.75rem;">Giờ bắt đầu</label>
@@ -938,6 +990,7 @@
         window.downloadQRCode = downloadQRCode;
         window.refreshDataSmooth = refreshDataSmooth;
         window.adminSubmitCheckin = adminSubmitCheckin;
+        window.showUpdateLogs = showUpdateLogs;
         
         render();
     </script>
